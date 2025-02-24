@@ -11,9 +11,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
 }
 
 
-void MQTTConnectorClass::Setup(String devicename, String mqttbroker, int port, String username, String password)
+void MQTTConnectorClass::Setup(String devicename, const char* mqttbroker, int port, String username, String password)
 {
-    WebSerialLogger.println("Initializing MQTT client. broker: " + mqttbroker + ":" + String(port) + " user: " + username);
+    WebSerialLogger.println("Initializing MQTT client. broker: " + String(mqttbroker) + ":" + String(port) + " user: " + username);
 
 
      device_id = devicename;
@@ -22,7 +22,7 @@ void MQTTConnectorClass::Setup(String devicename, String mqttbroker, int port, S
 
     _wifiClientmqtt = new WiFiClient();
 
-    _mqttClient = new PubSubClient(mqttbroker.c_str(), port, *_wifiClientmqtt);
+    _mqttClient = new PubSubClient(mqttbroker, port, *_wifiClientmqtt);
     _mqttClient->setBufferSize(4096);
     _mqttClient->setCallback(callback);
     
@@ -99,9 +99,9 @@ bool MQTTConnectorClass::SetupSensor(String topic, String sensor, String compone
         return false;
 
     //WebSerialLogger.println("Configuring sensor "+ topic);
-    String header = "homeassistant/" + sensor + "/" + device_id + "_" + component + "_" + topic;
+    String header = "homeassistant/" + sensor + "/" + device_id + "_" + component ;
 
-    String config_topic = header + "/config";
+    String config_topic = header+ "_" + topic + "/config";
 	String name = device_id + "_" + topic;
 
     JsonDocument root;
@@ -141,7 +141,7 @@ bool MQTTConnectorClass::SendPayload(String payload, String topic, bool retain)
     if(!_active)
         return false;
 
-    WebSerialLogger.println("Sending mqtt message: " + payload + " to " + topic);
+    //WebSerialLogger.println("Sending mqtt message: " + payload + " to " + topic);
 
     if(!_mqttClient->publish(topic.c_str(), payload.c_str(), retain))
     {
@@ -166,7 +166,7 @@ void MQTTConnectorClass::PublishMessage(JsonDocument root, String component, boo
     if(root == NULL)
         return;
 
-    String header = "homeassistant/" + sensor + "/" + device_id + "_" + component + "_" + topic;
+    String header = "homeassistant/" + sensor + "/" + device_id + "_" + component;
 
     String msg;
     size_t size = serializeJson(root, msg);

@@ -1,6 +1,10 @@
 #include <Arduino.h>
 #include "PubSubClient.h"
+#if defined(ESP8266)
+#include "ESP8266WiFi.h"
+#elif defined(ESP32)
 #include "WiFi.h"
+#endif
 #include <WiFiClient.h>
 #include <ArduinoJson.h>
 #include "../Webserial/webserial.hpp"
@@ -8,6 +12,7 @@
 
 #ifndef MQTTCONNECTOR_H
 #define MQTTCONNECTOR_H
+
 
 struct MQTTMessages
 {
@@ -30,7 +35,7 @@ class MQTTConnectorClass
         String _pass = "";
         
     public:
-        void Setup(String devicename, String mqttbroker, int port, String username, String password);
+        void Setup(String devicename, const char* mqttbroker, int port, String username, String password);
         void Loop();
         void PublishMessage(JsonDocument msg, String component, bool retain = false, String topic = "", String sensor = "sensor");
         bool SendPayload(String msg, String topic, bool retain = false);

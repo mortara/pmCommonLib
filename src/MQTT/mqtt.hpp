@@ -33,9 +33,10 @@ class MQTTConnectorClass
         unsigned long _lastMqTTLoop = 0;
         String _user = "";
         String _pass = "";
+        String _manufacturer = "";
         
     public:
-        void Setup(String devicename, const char* mqttbroker, int port, String username, String password);
+        void Setup(String devicename, String manufacturer, const char* mqttbroker, int port, String username, String password);
         void Loop();
         void PublishMessage(JsonDocument msg, String component, bool retain = false, String topic = "", String sensor = "sensor");
         bool SendPayload(String msg, String topic, bool retain = false);

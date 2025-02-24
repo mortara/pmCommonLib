@@ -11,7 +11,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
 }
 
 
-void MQTTConnectorClass::Setup(String devicename, const char* mqttbroker, int port, String username, String password)
+void MQTTConnectorClass::Setup(String devicename, String manufacturer, const char* mqttbroker, int port, String username, String password)
 {
     WebSerialLogger.println("Initializing MQTT client. broker: " + String(mqttbroker) + ":" + String(port) + " user: " + username);
 
@@ -19,6 +19,7 @@ void MQTTConnectorClass::Setup(String devicename, const char* mqttbroker, int po
      device_id = devicename;
      _user = username;
     _pass = password;
+    _manufacturer = manufacturer;
 
     _wifiClientmqtt = new WiFiClient();
 
@@ -149,8 +150,9 @@ bool MQTTConnectorClass::SetupSensor(String topic, String sensor, String compone
     JsonArray deviceids = devobj["ids"].to<JsonArray>();
     deviceids.add(device_id);
 
-    devobj["name"] = component;
-
+    devobj["name"] = device_id;
+    devobj["mf"] = _manufacturer;
+    devobj["mdl"] = device_id;
 
     PublishMessage(root, component, true, config_topic, sensor);
    

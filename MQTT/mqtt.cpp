@@ -11,15 +11,17 @@ void callback(char* topic, byte* payload, unsigned int length) {
 }
 
 
-void MQTTConnectorClass::Setup(String devicename, String mqttbroker, int port)
+void MQTTConnectorClass::Setup(String devicename, String mqttbroker, int port, String username, String password)
 {
      WebSerialLogger.println("Initializing MQTT client");
 
      device_id = devicename;
+     _user = username;
+    _pass = password;
 
     _wifiClientmqtt = new WiFiClient();
 
-    _mqttClient = new PubSubClient(mqttbroker, port, *_wifiClientmqtt);
+    _mqttClient = new PubSubClient(mqttbroker.c_str(), port, *_wifiClientmqtt);
     _mqttClient->setBufferSize(4096);
     _mqttClient->setCallback(callback);
     
@@ -62,7 +64,7 @@ void MQTTConnectorClass::Loop()
     }
 }
 
-bool MQTTConnectorClass::Connect(String username, String password)
+bool MQTTConnectorClass::Connect()
 {
     WebSerialLogger.println("Connecting mqtt client ...");
 
@@ -74,7 +76,7 @@ bool MQTTConnectorClass::Connect(String username, String password)
     }
 
     _lastConnectAttempt = millis();
-    if(!_mqttClient->connect(device_id.c_str(), username, password))
+    if(!_mqttClient->connect(device_id.c_str(), _user.c_str(), _pass.c_str()))
     {
         WebSerialLogger.println("Could not connect to MQTT broker!");
         WebSerialLogger.println("State: " + String(_mqttClient->state()));

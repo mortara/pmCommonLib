@@ -1,10 +1,13 @@
 #include "wifimanager.hpp"
 #include "../MQTT/mqtt.hpp"
 
-void WIFIManagerClass::StartUp(const char *hostname)
+void WIFIManagerClass::StartUp(String hostname, String SSID, String PASS)
 {
     WiFi.disconnect();
 
+    _credentials.SSID = SSID;
+    _credentials.PASS = PASS;
+    
     WiFi.mode(WIFI_STA);
     WiFi.setSleep(true);
     WiFi.setAutoReconnect(true);

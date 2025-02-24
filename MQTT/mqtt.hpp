@@ -26,7 +26,8 @@ class MQTTConnectorClass
         String device_id = "randomesp32device";
         unsigned long _lastConnectAttempt;
         unsigned long _lastMqTTLoop = 0;
-
+        String _user = "";
+        String _pass = "";
         
     public:
         void Setup(String devicename, String mqttbroker, int port);
@@ -35,7 +36,7 @@ class MQTTConnectorClass
         bool SendPayload(String msg, String component, String topic, bool retain = false);
         bool isActive();
         bool SetupSensor(String topic, String sensor, String component, String deviceclass = "", String unit = "", String icon = "");
-        bool Connect(String username, String password);
+        bool Connect();
 
         std::list<MQTTMessages *>* Tasks;
         volatile bool lock;   

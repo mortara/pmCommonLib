@@ -120,11 +120,11 @@ bool MQTTConnectorClass::SetupSensor(String topic, String sensor, String compone
     if(!_active)
         return false;
 
-    WebSerialLogger.println("Configuring sensor "+ topic);
+    //
     String header = "homeassistant/" + sensor + "/" + device_id + "_" + component ;
-
+    WebSerialLogger.println("Configuring sensor "+ header);
     String config_topic = header+ "_" + topic + "/config";
-	String name = device_id + "_" + topic;
+	String name = device_id + "_" + component + "_" + topic;
 
     JsonDocument root;
 

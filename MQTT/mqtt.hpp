@@ -4,7 +4,7 @@
 #include <WiFiClient.h>
 #include <ArduinoJson.h>
 #include "secrets.h"
-#include "webserial.hpp"
+#include "../Webserial/webserial.hpp"
 #include <list>
 
 #ifndef MQTTCONNECTOR_H
@@ -30,13 +30,13 @@ class MQTTConnectorClass
 
         
     public:
-        void Setup();
+        void Setup(String mqttbroker, int port);
         void Loop();
         void PublishMessage(JsonDocument msg, String component, bool retain = false, String topic = "");
         bool SendPayload(String msg, String component, String topic, bool retain = false);
         bool isActive();
         bool SetupSensor(String topic, String sensor, String component, String deviceclass = "", String unit = "", String icon = "");
-        bool Connect();
+        bool Connect(String username, String password);
 
         std::list<MQTTMessages *>* Tasks;
         volatile bool lock;   

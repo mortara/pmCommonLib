@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include <WiFi.h>
-#include "secrets.h"
 #include "../Webserial/webserial.hpp"
 
 #ifndef WIFIMANAGER_H
@@ -26,7 +25,7 @@ class WIFIManagerClass
 
     public:
 
-        void StartUp();
+        void StartUp(const char *hostname);
         bool Connect();
         void Disconnect();
         void Loop();

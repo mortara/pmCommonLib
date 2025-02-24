@@ -11,13 +11,15 @@ void callback(char* topic, byte* payload, unsigned int length) {
 }
 
 
-void MQTTConnectorClass::Setup()
+void MQTTConnectorClass::Setup(String devicename, String mqttbroker, int port)
 {
      WebSerialLogger.println("Initializing MQTT client");
 
+     device_id = devicename;
+
     _wifiClientmqtt = new WiFiClient();
 
-    _mqttClient = new PubSubClient(MQTTBROKER, 1883, *_wifiClientmqtt);
+    _mqttClient = new PubSubClient(mqttbroker, port, *_wifiClientmqtt);
     _mqttClient->setBufferSize(4096);
     _mqttClient->setCallback(callback);
     
@@ -60,7 +62,7 @@ void MQTTConnectorClass::Loop()
     }
 }
 
-bool MQTTConnectorClass::Connect()
+bool MQTTConnectorClass::Connect(String username, String password)
 {
     WebSerialLogger.println("Connecting mqtt client ...");
 
@@ -72,7 +74,7 @@ bool MQTTConnectorClass::Connect()
     }
 
     _lastConnectAttempt = millis();
-    if(!_mqttClient->connect(device_id.c_str(), MQTTUSER, MQTTPASSWORD))
+    if(!_mqttClient->connect(device_id.c_str(), username, password))
     {
         WebSerialLogger.println("Could not connect to MQTT broker!");
         WebSerialLogger.println("State: " + String(_mqttClient->state()));
@@ -123,7 +125,7 @@ bool MQTTConnectorClass::SetupSensor(String topic, String sensor, String compone
 
     devobj["name"] = device_id;
     devobj["mf"] = "Patrick Mortara";
-    devobj["mdl"] = "ESP32Radio";
+    devobj["mdl"] = device_id;
 
     PublishMessage(root, component, true, config_topic);
    

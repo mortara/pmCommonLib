@@ -1,7 +1,7 @@
 #include "wifimanager.hpp"
-#include "mqtt.hpp"
+#include "../MQTT/mqtt.hpp"
 
-void WIFIManagerClass::StartUp()
+void WIFIManagerClass::StartUp(const char *hostname)
 {
     WiFi.disconnect();
 
@@ -10,11 +10,13 @@ void WIFIManagerClass::StartUp()
     WiFi.setAutoReconnect(true);
     //Connect();
 
-    WiFi.setHostname("ESP32Radio");
+    WiFi.setHostname(hostname);
 }
 
-bool WIFIManagerClass::Connect()
+bool WIFIManagerClass::Connect(WIFICreds credentials)
 {
+    _credentials = credentials;
+
     if(WiFi.status() == WL_CONNECTED || connecting)
     {
         //WebSerialLogger.println("Already connected or connecting");

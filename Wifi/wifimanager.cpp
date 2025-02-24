@@ -18,6 +18,11 @@ bool WIFIManagerClass::Connect(String SSID, String PASS)
     _credentials.SSID = SSID;
     _credentials.PASS = PASS;
 
+    Connect();
+}
+
+bool WIFIManagerClass::Connect()
+{
     if(WiFi.status() == WL_CONNECTED || connecting)
     {
         //WebSerialLogger.println("Already connected or connecting");

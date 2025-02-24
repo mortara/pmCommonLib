@@ -1,6 +1,10 @@
 
 #include <Arduino.h>
-#include <WiFi.h>
+#if defined(ESP8266)
+#include "ESP8266WiFi.h"
+#elif defined(ESP32)
+#include "WiFi.h"
+#endif
 #include "AsyncTCP.h"
 #include "ESPAsyncWebServer.h"
 #include <MycilaWebSerial.h>

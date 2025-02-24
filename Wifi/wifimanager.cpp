@@ -13,9 +13,10 @@ void WIFIManagerClass::StartUp(const char *hostname)
     WiFi.setHostname(hostname);
 }
 
-bool WIFIManagerClass::Connect(WIFICreds credentials)
+bool WIFIManagerClass::Connect(String SSID, String PASS)
 {
-    _credentials = credentials;
+    _credentials.SSID = SSID;
+    _credentials.PASS = PASS;
 
     if(WiFi.status() == WL_CONNECTED || connecting)
     {

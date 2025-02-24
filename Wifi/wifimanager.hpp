@@ -15,7 +15,7 @@ class WIFIManagerClass
     private:
         bool connecting = false;
         bool connected = false;
-        WIFICreds _credentials = {WIFISSID, WIFIPASS};
+        WIFICreds _credentials;
         unsigned long interval = 15000;
         unsigned long _lastConnectionTry = 0;
         unsigned long _lastMqttupdate = 0;
@@ -26,7 +26,7 @@ class WIFIManagerClass
     public:
 
         void StartUp(const char *hostname);
-        bool Connect(WIFICreds credentials);
+        bool Connect(String SSID, String PASS);
         void Disconnect();
         void Loop();
         void DisplayInfo();

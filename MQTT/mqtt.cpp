@@ -97,9 +97,9 @@ bool MQTTConnectorClass::SetupSensor(String topic, String sensor, String compone
         return false;
 
     //WebSerialLogger.println("Configuring sensor "+ topic);
-    String sensor_topic_head = "homeassistant/" + sensor + "/" + device_id;
+    String header = "homeassistant/" + sensor + "/" + device_id + "_" + component + "_" + topic;
 
-    String config_topic = sensor_topic_head + "_" + topic + "/config";
+    String config_topic = header + "/config";
 	String name = device_id + "_" + topic;
 
     JsonDocument root;
@@ -117,7 +117,7 @@ bool MQTTConnectorClass::SetupSensor(String topic, String sensor, String compone
 
     root["value_template"] = "{{ value_json." + topic + "}}";
     root["uniq_id"] = name;
-    root["state_topic"] = "homeassistant/sensor/" + device_id + "_" + component + "/state";
+    root["state_topic"] = header + "/state";
 
     root["entity_category"] = "diagnostic";
     
@@ -125,16 +125,15 @@ bool MQTTConnectorClass::SetupSensor(String topic, String sensor, String compone
     JsonArray deviceids = devobj["ids"].to<JsonArray>();
     deviceids.add(device_id);
 
-    devobj["name"] = device_id;
-    devobj["mf"] = "Patrick Mortara";
-    devobj["mdl"] = device_id;
+    devobj["name"] = component;
+
 
     PublishMessage(root, component, true, config_topic);
    
     return true;
 }
 
-bool MQTTConnectorClass::SendPayload(String payload, String topic, String component, bool retain)
+bool MQTTConnectorClass::SendPayload(String payload, String topic, bool retain)
 {
     
     if(!_active)
@@ -163,6 +162,8 @@ void MQTTConnectorClass::PublishMessage(JsonDocument root, String component, boo
     if(root == NULL)
         return;
 
+    String header = "homeassistant/" + sensor + "/" + device_id + "_" + component + "_" + topic;
+
     String msg;
     size_t size = serializeJson(root, msg);
     
@@ -171,11 +172,10 @@ void MQTTConnectorClass::PublishMessage(JsonDocument root, String component, boo
         WebSerialLogger.println("Size : " + String(size));
 
     if(topic == "")
-        topic = "homeassistant/sensor/" + device_id + "_" + component + "/state";
+        topic = header + "/state";
 
     MQTTMessages *bt = new MQTTMessages();
     bt->payload = msg;
-    bt->component = component;
     bt->topic = topic;
     bt->Retain = retain;
 
@@ -214,7 +214,7 @@ void MQTTConnectorClass::Task1code(void *pvParameters)
             MQTTMessages *bt = MQTTConnector.Tasks->front();
             MQTTConnector.lock = false;
             
-            bool ok = MQTTConnector.SendPayload(bt->payload, bt->topic, bt->component);
+            bool ok = MQTTConnector.SendPayload(bt->payload, bt->topic, bt->Retain);
 
             MQTTConnector.lock = true;
             MQTTConnector.Tasks->remove(bt);

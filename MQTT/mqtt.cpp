@@ -133,7 +133,7 @@ bool MQTTConnectorClass::SetupSensor(String topic, String sensor, String compone
     return true;
 }
 
-bool MQTTConnectorClass::SendPayload(String payload, String topic, bool retain = false)
+bool MQTTConnectorClass::SendPayload(String payload, String topic, bool retain)
 {
     
     if(!_active)
@@ -156,7 +156,7 @@ bool MQTTConnectorClass::SendPayload(String payload, String topic, bool retain =
     return true;
 }
 
-void MQTTConnectorClass::PublishMessage(JsonDocument root, String component, bool retain, String topic = "", String sensor = "sensor")
+void MQTTConnectorClass::PublishMessage(JsonDocument root, String component, bool retain, String topic, String sensor)
 {
     
     if(root == NULL)

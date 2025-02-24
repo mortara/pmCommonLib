@@ -83,6 +83,7 @@ bool MQTTConnectorClass::Connect()
     }
     else
     {
+        WebSerialLogger.println("Successfully connected to MQTT broker!");
         _mqttClient->subscribe("motd");
         _active = true;
     }
@@ -138,7 +139,9 @@ bool MQTTConnectorClass::SendPayload(String payload, String topic, bool retain)
     
     if(!_active)
         return false;
-    
+
+    WebSerialLogger.println("Sending mqtt message: " + payload + " to " + topic);
+
     if(!_mqttClient->publish(topic.c_str(), payload.c_str(), retain))
     {
         WebSerialLogger.println("Error publishing data!");

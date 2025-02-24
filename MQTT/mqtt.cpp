@@ -13,7 +13,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 void MQTTConnectorClass::Setup(String devicename, String mqttbroker, int port, String username, String password)
 {
-     WebSerialLogger.println("Initializing MQTT client");
+    WebSerialLogger.println("Initializing MQTT client. broker: " + mqttbroker + ":" + String(port) + " user: " + username);
+
 
      device_id = devicename;
      _user = username;
@@ -66,7 +67,7 @@ void MQTTConnectorClass::Loop()
 
 bool MQTTConnectorClass::Connect()
 {
-    WebSerialLogger.println("Connecting mqtt client ...");
+    WebSerialLogger.println("Connecting MQTT client. broker: " + mqttbroker + ":" + String(port) + " user: " + username);
 
     if(_wifiClientmqtt == NULL)
     {

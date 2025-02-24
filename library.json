@@ -13,13 +13,13 @@
     {
       "name": "Patrick Mortara",
       "email": "mortara@gmail.com",
-      "url": "https://www.mortara.org"
+      "url": "https://www.mortara.org",
       "maintainer": true
     }
   ],
   "license": "MIT",
   "homepage": "https://www.mortara.org/",
-  "dependencies": ,
+  "dependencies": "",
   "frameworks": "*",
   "platforms": "*"
 }

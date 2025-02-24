@@ -19,7 +19,6 @@
   ],
   "license": "MIT",
   "homepage": "https://www.mortara.org/",
-  "dependencies": "",
   "frameworks": "*",
   "platforms": "*"
 }

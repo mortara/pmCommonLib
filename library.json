@@ -1,0 +1,25 @@
+{
+  "name": "pmCommonLib",
+  "version": "1.0.0",
+  "description": "A collection of classes i regulary use in my projects",
+  "keywords": "ESP32, Arduino, PlatformIO, ESP8266",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/mortara/pmCommonLib"
+  },
+  "authors":
+  [
+    {
+      "name": "Patrick Mortara",
+      "email": "mortara@gmail.com",
+      "url": "https://www.mortara.org"
+      "maintainer": true
+    }
+  ],
+  "license": "MIT",
+  "homepage": "https://www.mortara.org/",
+  "dependencies": ,
+  "frameworks": "*",
+  "platforms": "*"
+}

@@ -126,6 +126,7 @@ void WIFIManagerClass::Loop()
     {
         WebSerialLogger.println("WiFi connected!");
         connecting = false;
+        DisplayInfo();
     }
 
     if(currentMillis - _lastMqttupdate > 30000 && connected && MQTTConnector.isActive())

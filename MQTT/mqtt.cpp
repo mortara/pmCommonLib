@@ -67,7 +67,7 @@ void MQTTConnectorClass::Loop()
 
 bool MQTTConnectorClass::Connect()
 {
-    WebSerialLogger.println("Connecting MQTT client. broker: " + mqttbroker + ":" + String(port) + " user: " + username);
+    WebSerialLogger.println("Connecting MQTT client...");
 
     if(_wifiClientmqtt == NULL)
     {

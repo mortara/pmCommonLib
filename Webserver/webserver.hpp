@@ -14,7 +14,7 @@ class WebServerClass
         DNSServer dnsServer;
        
     public:
-        void Setup();
+        void Setup(ArRequestHandlerFunction onRequest, ArRequestHandlerFunction onNotFound);
         AsyncWebServer *GetServer();
 
 } ;

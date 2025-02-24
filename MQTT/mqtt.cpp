@@ -43,6 +43,13 @@ void MQTTConnectorClass::Loop()
 {
     unsigned long now = millis();
 
+    if(Tasks == nullptr)
+    {
+        Serial.println("MQTT Client has not been set up!");
+        return;
+    }
+
+
     if(!_active && WiFi.status() == WL_CONNECTED && now - _lastConnectAttempt > 5000UL)
     {
         Connect();
@@ -113,7 +120,7 @@ bool MQTTConnectorClass::SetupSensor(String topic, String sensor, String compone
     if(!_active)
         return false;
 
-    //WebSerialLogger.println("Configuring sensor "+ topic);
+    WebSerialLogger.println("Configuring sensor "+ topic);
     String header = "homeassistant/" + sensor + "/" + device_id + "_" + component ;
 
     String config_topic = header+ "_" + topic + "/config";
@@ -145,7 +152,7 @@ bool MQTTConnectorClass::SetupSensor(String topic, String sensor, String compone
     devobj["name"] = component;
 
 
-    PublishMessage(root, component, true, config_topic);
+    PublishMessage(root, component, true, config_topic, sensor);
    
     return true;
 }
@@ -186,7 +193,7 @@ void MQTTConnectorClass::PublishMessage(JsonDocument root, String component, boo
     String msg;
     size_t size = serializeJson(root, msg);
     
-    //WebSerialLogger.println("Sending mqtt message: " + String(msg));
+    WebSerialLogger.println("Sending mqtt message: " + String(msg) + " Topic: " + topic);
     if(size > 1024)
         WebSerialLogger.println("Size : " + String(size));
 

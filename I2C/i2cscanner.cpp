@@ -21,7 +21,7 @@ void I2CScanner::setup()
 #if defined (ESP8266) || defined(ESP32)
   uint8_t sda = 21;  //  21
   uint8_t scl = 22;  //  22
-  Wire.begin(sda, scl, 100000);  //  ESP32 - change config pins if needed.
+  Wire.begin(sda, scl, (uint8_t)100000);  //  ESP32 - change config pins if needed.
 #else
   Wire.begin();
 #endif

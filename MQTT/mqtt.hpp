@@ -25,8 +25,8 @@ struct MQTTMessages
 class MQTTConnectorClass
 {
     private:
-        WiFiClient *_wifiClientmqtt = NULL;
-        PubSubClient *_mqttClient;
+        WiFiClient *_wifiClientmqtt = nullptr;
+        PubSubClient *_mqttClient = nullptr;
         bool _active = false;
         String device_id = "randomesp32device";
         unsigned long _lastConnectAttempt;
@@ -43,7 +43,7 @@ class MQTTConnectorClass
         bool SetupSensor(String topic, String sensor, String component, String deviceclass = "", String unit = "", String icon = "");
         bool Connect();
 
-        std::list<MQTTMessages *>* Tasks;
+        std::list<MQTTMessages *>* Tasks = nullptr;
         volatile bool lock;   
         
 };

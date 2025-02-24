@@ -6,7 +6,7 @@ void recvMsg(const uint8_t *data, size_t len)
 {
     Serial.println("Received Data...");
     String d = "";
-    for(int i=0; i < len; i++){
+    for(int i=0; i < (int)len; i++){
         d += char(data[i]);
     }
 

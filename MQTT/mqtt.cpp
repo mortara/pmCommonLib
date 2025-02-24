@@ -194,7 +194,7 @@ void MQTTConnectorClass::PublishMessage(JsonDocument root, String component, boo
 void MQTTConnectorClass::Task1code(void *pvParameters) 
 {
     
-    // Add a delay to give the rest of the radio some time to setup
+    // Add a delay to give the rest of the modules some time to setup
     delay(15000);
     WebSerialLogger.println("MQTT Loop starting ...");
     

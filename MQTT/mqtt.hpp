@@ -30,7 +30,7 @@ class MQTTConnectorClass
         String _pass = "";
         
     public:
-        void Setup(String devicename, String mqttbroker, int port);
+        void Setup(String devicename, String mqttbroker, int port, String username, String password);
         void Loop();
         void PublishMessage(JsonDocument msg, String component, bool retain = false, String topic = "");
         bool SendPayload(String msg, String component, String topic, bool retain = false);

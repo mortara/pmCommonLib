@@ -23,7 +23,7 @@ class WIFIManagerClass
         unsigned long interval = 15000;
         unsigned long _lastConnectionTry = 0;
         unsigned long _lastMqttupdate = 0;
-        TaskHandle_t Task1;
+        
         void setupMQTT();
         bool mqttsetup = false;
 

@@ -45,7 +45,7 @@ class MQTTConnectorClass
 
         std::list<MQTTMessages *>* Tasks;
         volatile bool lock;   
-        static void Task1code(void *pvParameters);
+        
 };
 
 extern MQTTConnectorClass MQTTConnector;

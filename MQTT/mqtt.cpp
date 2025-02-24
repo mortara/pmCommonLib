@@ -27,17 +27,7 @@ void MQTTConnectorClass::Setup(String devicename, const char* mqttbroker, int po
     _mqttClient->setCallback(callback);
     
     Tasks = new std::list<MQTTMessages *>();
-    TaskHandle_t xHandle = NULL;
-
-    xTaskCreatePinnedToCore(
-        Task1code, /* Function to implement the task */
-        "Task1", /* Name of the task */
-        10000,  /* Stack size in words */
-        this,  /* Task input parameter */
-        0,  /* Priority of the task */
-        &xHandle,  /* Task handle. */
-        0); /* Core where the task should run */
-
+   
     _lastConnectAttempt = millis();
 }
 
@@ -62,6 +52,31 @@ void MQTTConnectorClass::Loop()
     {
         _lastMqTTLoop = now;
         _mqttClient->loop();
+    }
+
+    if(!MQTTConnector.Tasks->empty() && MQTTConnector.isActive())
+    {
+        while(MQTTConnector.lock)
+            delay(1);
+
+        MQTTConnector.lock = true;
+        MQTTMessages *bt = MQTTConnector.Tasks->front();
+        MQTTConnector.lock = false;
+        
+        bool ok = MQTTConnector.SendPayload(bt->payload, bt->topic, bt->Retain);
+
+        MQTTConnector.lock = true;
+        MQTTConnector.Tasks->remove(bt);
+        if(!ok)
+        {
+            WebSerialLogger.println("unable to publish mqtt message ...");
+            MQTTConnector.Tasks->push_back(bt);
+            delay(1000);
+        }
+        else
+            delete bt;
+        MQTTConnector.lock = false;
+        
     }
 }
 
@@ -195,45 +210,5 @@ void MQTTConnectorClass::PublishMessage(JsonDocument root, String component, boo
     _mqttClient->loop();
 }
 
-void MQTTConnectorClass::Task1code(void *pvParameters) 
-{
-    
-    // Add a delay to give the rest of the modules some time to setup
-    delay(15000);
-    WebSerialLogger.println("MQTT Loop starting ...");
-    
-    for(;;) 
-    {
-        delay(100);
-        if(MQTTConnector.Tasks->empty() || !MQTTConnector.isActive())
-        {
-            delay(1000);
-        }
-        else
-        {
-            while(MQTTConnector.lock)
-                delay(1);
-
-            MQTTConnector.lock = true;
-            MQTTMessages *bt = MQTTConnector.Tasks->front();
-            MQTTConnector.lock = false;
-            
-            bool ok = MQTTConnector.SendPayload(bt->payload, bt->topic, bt->Retain);
-
-            MQTTConnector.lock = true;
-            MQTTConnector.Tasks->remove(bt);
-            if(!ok)
-            {
-                WebSerialLogger.println("unable to publish mqtt message ...");
-                MQTTConnector.Tasks->push_back(bt);
-                delay(1000);
-            }
-            else
-                delete bt;
-            MQTTConnector.lock = false;
-            
-        }
-    }
-}
 
 MQTTConnectorClass MQTTConnector;

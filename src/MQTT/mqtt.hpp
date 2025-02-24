@@ -34,9 +34,10 @@ class MQTTConnectorClass
         String _user = "";
         String _pass = "";
         String _manufacturer = "";
+        String _model = "";
         
     public:
-        void Setup(String devicename, String manufacturer, const char* mqttbroker, int port, String username, String password);
+        void Setup(String devicename, String model, String manufacturer, const char* mqttbroker, int port, String username, String password);
         void Loop();
         void PublishMessage(JsonDocument msg, String component, bool retain = false, String topic = "", String sensor = "sensor");
         bool SendPayload(String msg, String topic, bool retain = false);

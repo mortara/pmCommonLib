@@ -18,7 +18,7 @@ bool WIFIManagerClass::Connect(String SSID, String PASS)
     _credentials.SSID = SSID;
     _credentials.PASS = PASS;
 
-    Connect();
+    return Connect();
 }
 
 bool WIFIManagerClass::Connect()

@@ -3,7 +3,6 @@
 #include "WiFi.h"
 #include <WiFiClient.h>
 #include <ArduinoJson.h>
-#include "secrets.h"
 #include "../Webserial/webserial.hpp"
 #include <list>
 
@@ -24,13 +23,13 @@ class MQTTConnectorClass
         WiFiClient *_wifiClientmqtt = NULL;
         PubSubClient *_mqttClient;
         bool _active = false;
-        String device_id = "esp32radio";
+        String device_id = "randomesp32device";
         unsigned long _lastConnectAttempt;
         unsigned long _lastMqTTLoop = 0;
 
         
     public:
-        void Setup(String mqttbroker, int port);
+        void Setup(String devicename, String mqttbroker, int port);
         void Loop();
         void PublishMessage(JsonDocument msg, String component, bool retain = false, String topic = "");
         bool SendPayload(String msg, String component, String topic, bool retain = false);

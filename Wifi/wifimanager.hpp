@@ -26,7 +26,7 @@ class WIFIManagerClass
     public:
 
         void StartUp(const char *hostname);
-        bool Connect();
+        bool Connect(WIFICreds credentials);
         void Disconnect();
         void Loop();
         void DisplayInfo();

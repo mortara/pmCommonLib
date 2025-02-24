@@ -21,8 +21,9 @@
   "homepage": "https://www.mortara.org/",
   "dependencies": {
     "MycilaWebSerial": "https://github.com/mathieucarbou/MycilaWebSerial.git",
-    "AsyncTCP": "https://github.com/mathieucarbou/AsyncTCP.git",
-    "ESPAsyncWebServer": "https://github.com/mathieucarbou/ESPAsyncWebServer.git",
+    "AsyncTCP": "https://github.com/ESP32Async/AsyncTCP",
+    "ESPAsyncTCP": "https://github.com/ESP32Async/ESPAsyncTCP",
+    "ESPAsyncWebServer": "https://github.com/ESP32Async/ESPAsyncWebServer.git",
     "PubSubClient": "https://github.com/hmueller01/pubsubclient3.git",
     "ArduinoJson": "https://github.com/bblanchon/ArduinoJson.git"
   },

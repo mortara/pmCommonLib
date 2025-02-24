@@ -25,7 +25,7 @@ class WIFIManagerClass
 
     public:
 
-        void StartUp(const char *hostname);
+        void Setup(String hostname, String SSID, String PASS);
         bool Connect();
         bool Connect(String SSID, String PASS);
         void Disconnect();

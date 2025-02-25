@@ -60,19 +60,19 @@ void WIFIManagerClass::setupMQTT()
 
     WebSerialLogger.println("Setting up Wifi MQTT client");
     
-    if(!MQTTConnector.SetupSensor("SSID", "sensor", "WIFI", "", "", ""))
+    if(!MQTTConnector.SetupSensor("SSID", "WIFI", "", "", ""))
     {
         WebSerialLogger.println("Unable to setup WIFI MQTT client");            
         return;
     }
 
-    MQTTConnector.SetupSensor("BSSID", "sensor", "WIFI", "", "", "");
-    MQTTConnector.SetupSensor("WIFI_RSSI", "sensor", "WIFI", "signal_strength", "dB", "mdi:sine-wave");
-    MQTTConnector.SetupSensor("Hostname", "sensor", "WIFI", "", "", "");
-    MQTTConnector.SetupSensor("IP", "sensor", "WIFI", "", "", "");
-    MQTTConnector.SetupSensor("SubnetMask", "sensor", "WIFI", "", "", "");
-    MQTTConnector.SetupSensor("Gateway", "sensor", "WIFI", "", "", "");
-    MQTTConnector.SetupSensor("DNS", "sensor", "WIFI", "", "", "");
+    MQTTConnector.SetupSensor("BSSID", "WIFI", "", "", "");
+    MQTTConnector.SetupSensor("WIFI_RSSI", "WIFI", "signal_strength", "dB", "mdi:sine-wave");
+    MQTTConnector.SetupSensor("Hostname",  "WIFI", "", "", "");
+    MQTTConnector.SetupSensor("IP", "WIFI", "", "", "");
+    MQTTConnector.SetupSensor("SubnetMask","WIFI", "", "", "");
+    MQTTConnector.SetupSensor("Gateway","WIFI", "", "", "");
+    MQTTConnector.SetupSensor("DNS", "WIFI", "", "", "");
 
     WebSerialLogger.println("WIfi mqtt setup done!");
 

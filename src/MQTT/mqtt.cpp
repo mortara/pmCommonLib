@@ -1,6 +1,6 @@
 #include "mqtt.hpp"
 
-void callback(char* topic, byte* payload, unsigned int length) {
+void default_callback(char* topic, byte* payload, unsigned int length) {
     
     String msg;
     for (byte i = 0; i < length; i++) {
@@ -11,7 +11,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
 }
 
 
-void MQTTConnectorClass::Setup(String devicename, String model, String manufacturer, const char* mqttbroker, int port, String username, String password)
+void MQTTConnectorClass::Setup(String devicename, String model, String manufacturer, const char* mqttbroker, int port, String username, String password, std::function<void(char*, uint8_t*, unsigned int)> callback = NULL)
 {
     WebSerialLogger.println("Initializing MQTT client. broker: " + String(mqttbroker) + ":" + String(port) + " user: " + username);
 
@@ -26,8 +26,12 @@ void MQTTConnectorClass::Setup(String devicename, String model, String manufactu
 
     _mqttClient = new PubSubClient(mqttbroker, port, *_wifiClientmqtt);
     _mqttClient->setBufferSize(4096);
-    _mqttClient->setCallback(callback);
-    
+
+    if(callback != NULL)
+        _mqttClient->setCallback(callback);
+    else
+        _mqttClient->setCallback(default_callback);
+
     Tasks = new std::list<MQTTMessages *>();
    
     _lastConnectAttempt = millis();
@@ -116,15 +120,15 @@ bool MQTTConnectorClass::Connect()
     return _active;
 }
 
-bool MQTTConnectorClass::SetupSensor(String topic, String sensor, String component, String deviceclass, String unit, String icon)
+bool MQTTConnectorClass::SetupSensor(String topic, String component, String deviceclass, String unit, String icon)
 {
     
     if(!_active)
         return false;
 
     //
-    String header = "homeassistant/" + sensor + "/" + device_id + "_" + component ;
-    WebSerialLogger.println("Configuring sensor "+ header);
+    String header = "homeassistant/sensor/" + device_id + "_" + component ;
+    WebSerialLogger.println("Configuring sensor " + header);
     String config_topic = header+ "_" + topic + "/config";
 	String name = device_id + "_" + component + "_" + topic;
 
@@ -142,7 +146,7 @@ bool MQTTConnectorClass::SetupSensor(String topic, String sensor, String compone
         root["unit_of_measurement"] = unit;
 
     root["value_template"] = "{{ value_json." + topic + "}}";
-    root["uniq_id"] = name;
+    root["unique_id"] = name;
     root["state_topic"] = header + "/state";
 
     root["entity_category"] = "diagnostic";
@@ -152,10 +156,55 @@ bool MQTTConnectorClass::SetupSensor(String topic, String sensor, String compone
     deviceids.add(device_id);
 
     devobj["name"] = device_id;
-    devobj["mf"] = _manufacturer;
-    devobj["mdl"] = _model;
+    devobj["manufacturer"] = _manufacturer;
+    devobj["model"] = _model;
 
-    PublishMessage(root, component, true, config_topic, sensor);
+    PublishMessage(root, component, true, config_topic, "sensor");
+   
+    return true;
+}
+
+bool MQTTConnectorClass::SetupSwitch(String topic, String component, String deviceclass, String icon)
+{
+    
+    if(!_active)
+        return false;
+
+    //
+    String header = "homeassistant/switch/" + device_id + "_" + component ;
+    WebSerialLogger.println("Configuring switch " + header);
+    String config_topic = header+ "_" + topic + "/config";
+	String name = device_id + "_" + component + "_" + topic;
+
+    JsonDocument root;
+
+    if(deviceclass != "")
+        root["device_class"] = deviceclass;
+    
+    root["name"] = name;
+
+    if(icon != "")
+        root["icon"] = icon;
+
+    root["value_template"] = "{{ value_json." + topic + "}}";
+    root["unique_id"] = name;
+    root["state_topic"] = header + "/state";
+
+    root["command_topic"] = header + "/set";
+    _mqttClient->subscribe(String(header + "/set").c_str());
+    
+
+    root["entity_category"] = "diagnostic";
+    
+    JsonObject devobj = root["dev"].to<JsonObject>();
+    JsonArray deviceids = devobj["ids"].to<JsonArray>();
+    deviceids.add(device_id);
+
+    devobj["name"] = device_id;
+    devobj["manufacturer"] = _manufacturer;
+    devobj["model"] = _model;
+
+    PublishMessage(root, component, true, config_topic, "switch");
    
     return true;
 }

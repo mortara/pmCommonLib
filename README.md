@@ -21,3 +21,7 @@ wifi connection manager
 ## webserver
 
 A wrapper for ESPAsyncWebserver
+
+## I2C
+
+A I2C device wrapper class

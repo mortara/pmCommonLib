@@ -19,8 +19,9 @@ class WIFIManagerClass
     private:
         bool connecting = false;
         bool connected = false;
+
         WIFICreds _credentials;
-        unsigned long interval = 15000;
+        unsigned long interval = 5000;
         unsigned long _lastConnectionTry = 0;
         unsigned long _lastMqttupdate = 0;
         

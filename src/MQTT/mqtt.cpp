@@ -61,7 +61,7 @@ void MQTTConnectorClass::Loop()
         Connect();
     }
 
-    if(now - _lastMqTTLoop > 5000UL)
+    if(now - _lastMqTTLoop > 1000UL)
     {
         _lastMqTTLoop = now;
         _mqttClient->loop();
@@ -190,8 +190,8 @@ bool MQTTConnectorClass::SetupSwitch(String topic, String component, String devi
     root["unique_id"] = name;
     root["state_topic"] = header + "/state";
 
-    root["command_topic"] = header + "/set";
-    _mqttClient->subscribe(String(header + "/set").c_str());
+    root["command_topic"] = header + "/" + topic;
+    _mqttClient->subscribe(String(header + "/"+ topic).c_str());
     
 
     root["entity_category"] = "diagnostic";
@@ -205,6 +205,56 @@ bool MQTTConnectorClass::SetupSwitch(String topic, String component, String devi
     devobj["model"] = _model;
 
     PublishMessage(root, component, true, config_topic, "switch");
+   
+    return true;
+}
+
+bool MQTTConnectorClass::SetupSelect(String topic, String component, String deviceclass, String icon, std::vector<String> options)
+{
+    if(!_active)
+        return false;
+
+    //
+    String header = "homeassistant/select/" + device_id + "_" + component ;
+    WebSerialLogger.println("Configuring select " + header);
+    String config_topic = header+ "_" + topic + "/config";
+	String name = device_id + "_" + component + "_" + topic;
+
+    JsonDocument root;
+
+    if(deviceclass != "")
+        root["device_class"] = deviceclass;
+    
+    root["name"] = name;
+
+    if(icon != "")
+        root["icon"] = icon;
+
+    root["value_template"] = "{{ value_json." + topic + "}}";
+    root["unique_id"] = name;
+    root["state_topic"] = header + "/state";
+
+    root["command_topic"] = header + "/" + topic;
+    _mqttClient->subscribe(String(header + "/" + topic).c_str());
+    
+
+    root["entity_category"] = "diagnostic";
+
+    JsonArray optionobj = root["options"].to<JsonArray>();
+    for(int i=0;i<options.size();i++)
+    {
+        optionobj.add(options[i]);
+    }
+
+    JsonObject devobj = root["dev"].to<JsonObject>();
+    JsonArray deviceids = devobj["ids"].to<JsonArray>();
+    deviceids.add(device_id);
+
+    devobj["name"] = device_id;
+    devobj["manufacturer"] = _manufacturer;
+    devobj["model"] = _model;
+
+    PublishMessage(root, component, true, config_topic, "select");
    
     return true;
 }
@@ -245,7 +295,7 @@ void MQTTConnectorClass::PublishMessage(JsonDocument root, String component, boo
     String msg;
     size_t size = serializeJson(root, msg);
     
-    WebSerialLogger.println("Sending mqtt message: " + String(msg) + " Topic: " + topic);
+    //WebSerialLogger.println("Sending mqtt message: " + String(msg) + " Topic: " + topic);
     if(size > 1024)
         WebSerialLogger.println("Size : " + String(size));
 

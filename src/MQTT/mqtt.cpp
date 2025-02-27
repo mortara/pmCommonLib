@@ -69,16 +69,11 @@ void MQTTConnectorClass::Loop()
 
     if(!Tasks->empty() && isActive())
     {
-        while(lock)
-            delay(1);
-
-        lock = true;
+      
         MQTTMessages *bt = Tasks->front();
-        lock = false;
         
         bool ok = SendPayload(bt->payload, bt->topic, bt->Retain);
 
-        lock = true;
         Tasks->remove(bt);
         if(!ok)
         {
@@ -88,8 +83,7 @@ void MQTTConnectorClass::Loop()
         }
         else
             delete bt;
-        lock = false;
-        
+
     }
 }
 
@@ -412,15 +406,10 @@ void MQTTConnectorClass::PublishMessage(JsonDocument root, String component, boo
     bt->topic = topic;
     bt->Retain = retain;
 
-    while(lock)
-        delay(1);
-
-    lock = true;
     //SendPayload(msg, component, retain);
 
     Tasks->push_back(bt);
-    lock = false;
-
+   
     _mqttClient->loop();
 }
 

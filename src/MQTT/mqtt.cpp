@@ -159,7 +159,7 @@ bool MQTTConnectorClass::SetupSensor(String topic, String component, String devi
     devobj["manufacturer"] = _manufacturer;
     devobj["model"] = _model;
 
-    PublishMessage(root, component, true, config_topic, "sensor");
+    PublishMessage(root, component, true, config_topic, SENSOR);
    
     return true;
 }
@@ -204,7 +204,7 @@ bool MQTTConnectorClass::SetupSwitch(String topic, String component, String devi
     devobj["manufacturer"] = _manufacturer;
     devobj["model"] = _model;
 
-    PublishMessage(root, component, true, config_topic, "switch");
+    PublishMessage(root, component, true, config_topic, SWITCH);
    
     return true;
 }
@@ -254,7 +254,51 @@ bool MQTTConnectorClass::SetupSelect(String topic, String component, String devi
     devobj["manufacturer"] = _manufacturer;
     devobj["model"] = _model;
 
-    PublishMessage(root, component, true, config_topic, "select");
+    PublishMessage(root, component, true, config_topic, SELECT);
+   
+    return true;
+}
+
+bool MQTTConnectorClass::SetupButton(String topic, String component, String deviceclass, String icon)
+{
+    if(!_active)
+        return false;
+
+    //
+    String header = "homeassistant/button/" + device_id + "_" + component ;
+    WebSerialLogger.println("Configuring button " + header);
+    String config_topic = header + "_" + topic + "/config";
+	String name = device_id + "_" + component + "_" + topic;
+
+    JsonDocument root;
+
+    if(deviceclass != "")
+        root["device_class"] = deviceclass;
+    
+    root["name"] = name;
+
+    if(icon != "")
+        root["icon"] = icon;
+
+    root["value_template"] = "{{ value_json." + topic + "}}";
+    root["unique_id"] = name;
+    root["state_topic"] = header + "/state";
+
+    root["command_topic"] = header + "/" + topic;
+    _mqttClient->subscribe(String(header + "/" + topic).c_str());
+    
+
+    root["entity_category"] = "diagnostic";
+
+    JsonObject devobj = root["dev"].to<JsonObject>();
+    JsonArray deviceids = devobj["ids"].to<JsonArray>();
+    deviceids.add(device_id);
+
+    devobj["name"] = device_id;
+    devobj["manufacturer"] = _manufacturer;
+    devobj["model"] = _model;
+
+    PublishMessage(root, component, true, config_topic, BUTTON);
    
     return true;
 }
@@ -284,13 +328,21 @@ bool MQTTConnectorClass::SendPayload(String payload, String topic, bool retain)
     return true;
 }
 
-void MQTTConnectorClass::PublishMessage(JsonDocument root, String component, bool retain, String topic, String sensor)
+void MQTTConnectorClass::PublishMessage(JsonDocument root, String component, bool retain, String topic, MQTTClassType sensor)
 {
     
     if(root == NULL)
         return;
 
-    String header = "homeassistant/" + sensor + "/" + device_id + "_" + component;
+    String typ = "sensor";
+    if(sensor == SWITCH)
+        typ = "switch";
+    else if(sensor == SELECT)
+        typ = "select";
+    else if(sensor == BUTTON)
+        typ = "button";
+
+    String header = "homeassistant/" + typ + "/" + device_id + "_" + component;
 
     String msg;
     size_t size = serializeJson(root, msg);

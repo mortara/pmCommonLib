@@ -56,8 +56,7 @@ class MQTTConnectorClass
         bool Connect();
 
         std::list<MQTTMessages *>* Tasks = nullptr;
-        volatile bool lock;   
-        
+      
 };
 
 extern MQTTConnectorClass MQTTConnector;

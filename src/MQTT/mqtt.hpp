@@ -18,7 +18,8 @@ enum MQTTClassType {
     SENSOR,
     SWITCH,
     SELECT,
-    BUTTON
+    BUTTON,
+    TEXT
   };
 
 struct MQTTMessages
@@ -53,6 +54,7 @@ class MQTTConnectorClass
         bool SetupSwitch(String topic, String component, String deviceclass, String icon);
         bool SetupSelect(String topic, String component, String deviceclass, String icon, std::vector<String> options);
         bool SetupButton(String topic, String component, String deviceclass, String icon);
+        bool SetupText(String topic, String component, String deviceclass, String icon);
         bool Connect();
 
         std::list<MQTTMessages *>* Tasks = nullptr;

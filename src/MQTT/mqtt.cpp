@@ -67,28 +67,28 @@ void MQTTConnectorClass::Loop()
         _mqttClient->loop();
     }
 
-    if(!MQTTConnector.Tasks->empty() && MQTTConnector.isActive())
+    if(!Tasks->empty() && isActive())
     {
-        while(MQTTConnector.lock)
+        while(lock)
             delay(1);
 
-        MQTTConnector.lock = true;
-        MQTTMessages *bt = MQTTConnector.Tasks->front();
-        MQTTConnector.lock = false;
+        lock = true;
+        MQTTMessages *bt = Tasks->front();
+        lock = false;
         
-        bool ok = MQTTConnector.SendPayload(bt->payload, bt->topic, bt->Retain);
+        bool ok = SendPayload(bt->payload, bt->topic, bt->Retain);
 
-        MQTTConnector.lock = true;
-        MQTTConnector.Tasks->remove(bt);
+        lock = true;
+        Tasks->remove(bt);
         if(!ok)
         {
             WebSerialLogger.println("unable to publish mqtt message ...");
-            MQTTConnector.Tasks->push_back(bt);
+            Tasks->push_back(bt);
             delay(1000);
         }
         else
             delete bt;
-        MQTTConnector.lock = false;
+        lock = false;
         
     }
 }
@@ -128,9 +128,11 @@ bool MQTTConnectorClass::SetupSensor(String topic, String component, String devi
 
     //
     String header = "homeassistant/sensor/" + device_id + "_" + component ;
-    WebSerialLogger.println("Configuring sensor " + header);
+    
     String config_topic = header+ "_" + topic + "/config";
 	String name = device_id + "_" + component + "_" + topic;
+
+    WebSerialLogger.println("Configuring switch " + config_topic);
 
     JsonDocument root;
 
@@ -172,9 +174,11 @@ bool MQTTConnectorClass::SetupSwitch(String topic, String component, String devi
 
     //
     String header = "homeassistant/switch/" + device_id + "_" + component ;
-    WebSerialLogger.println("Configuring switch " + header);
+
     String config_topic = header+ "_" + topic + "/config";
 	String name = device_id + "_" + component + "_" + topic;
+
+    WebSerialLogger.println("Configuring switch " + config_topic);
 
     JsonDocument root;
 
@@ -216,9 +220,11 @@ bool MQTTConnectorClass::SetupSelect(String topic, String component, String devi
 
     //
     String header = "homeassistant/select/" + device_id + "_" + component ;
-    WebSerialLogger.println("Configuring select " + header);
+    
     String config_topic = header+ "_" + topic + "/config";
 	String name = device_id + "_" + component + "_" + topic;
+
+    WebSerialLogger.println("Configuring select " + config_topic);
 
     JsonDocument root;
 
@@ -266,9 +272,11 @@ bool MQTTConnectorClass::SetupButton(String topic, String component, String devi
 
     //
     String header = "homeassistant/button/" + device_id + "_" + component ;
-    WebSerialLogger.println("Configuring button " + header);
+    
     String config_topic = header + "_" + topic + "/config";
 	String name = device_id + "_" + component + "_" + topic;
+
+    WebSerialLogger.println("Configuring button " + config_topic);
 
     JsonDocument root;
 
@@ -299,6 +307,51 @@ bool MQTTConnectorClass::SetupButton(String topic, String component, String devi
     devobj["model"] = _model;
 
     PublishMessage(root, component, true, config_topic, BUTTON);
+   
+    return true;
+}
+
+bool MQTTConnectorClass::SetupText(String topic, String component, String deviceclass, String icon)
+{
+    if(!_active)
+        return false;
+
+    //
+    String header = "homeassistant/text/" + device_id + "_" + component ;
+    String config_topic = header + "_" + topic + "/config";
+	String name = device_id + "_" + component + "_" + topic;
+
+    WebSerialLogger.println("Configuring text " + config_topic);
+
+    JsonDocument root;
+
+    if(deviceclass != "")
+        root["device_class"] = deviceclass;
+    
+    root["name"] = name;
+
+    if(icon != "")
+        root["icon"] = icon;
+
+    root["value_template"] = "{{ value_json." + topic + "}}";
+    root["unique_id"] = name;
+    root["state_topic"] = header + "/state";
+
+    root["command_topic"] = header + "/" + topic;
+    _mqttClient->subscribe(String(header + "/" + topic).c_str());
+    
+
+    root["entity_category"] = "diagnostic";
+
+    JsonObject devobj = root["dev"].to<JsonObject>();
+    JsonArray deviceids = devobj["ids"].to<JsonArray>();
+    deviceids.add(device_id);
+
+    devobj["name"] = device_id;
+    devobj["manufacturer"] = _manufacturer;
+    devobj["model"] = _model;
+
+    PublishMessage(root, component, true, config_topic, TEXT);
    
     return true;
 }

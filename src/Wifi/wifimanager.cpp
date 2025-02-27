@@ -1,28 +1,38 @@
 #include "wifimanager.hpp"
 #include "../MQTT/mqtt.hpp"
 
-void WIFIManagerClass::Setup(String hostname, String SSID, String PASS)
-{
-    WiFi.disconnect();
+void saveWifiCallback(){
+    Serial.println("[CALLBACK] saveCallback fired");
+        delay(2000);
+  }
+  
+  void configPortalTimeoutCallback(){
+    Serial.println("[CALLBACK] configPortalTimeoutCallback fired");
+        delay(2000);
+  }
+  
+  void configModeCallback (WiFiManager *myWiFiManager) {
+    Serial.println("Entered config mode");
+    Serial.println(WiFi.softAPIP());
+  
+    Serial.println(myWiFiManager->getConfigPortalSSID());
+  }
 
-    _credentials.SSID = SSID;
-    _credentials.PASS = PASS;
-
+  void WIFIManagerClass::Setup(String hostname)
+  {
     WiFi.mode(WIFI_STA);
-    WiFi.setSleep(true);
-    WiFi.setAutoReconnect(true);
-    //Connect();
-
     WiFi.setHostname(hostname.c_str());
-}
-
-bool WIFIManagerClass::Connect(String SSID, String PASS)
-{
-    _credentials.SSID = SSID;
-    _credentials.PASS = PASS;
-
-    return Connect();
-}
+    wifiManager.setConfigPortalBlocking(false);
+    wifiManager.setConnectTimeout(20);
+   
+    std::vector<const char *> menu = { "wifi", "restart", "exit" };  // Added by me...
+    wifiManager.setMenu(menu);
+    
+    if(wifiManager.autoConnect("AutoConnectAP"))
+    {
+      Serial.println("WIFI Connected");
+    }
+  }
 
 bool WIFIManagerClass::Connect()
 {
@@ -31,25 +41,14 @@ bool WIFIManagerClass::Connect()
         //WebSerialLogger.println("Already connected or connecting");
         return true;
     }
+
+    wifiManager.autoConnect();
     
     connecting = true;
-    WiFi.disconnect();
-    WiFi.begin(_credentials.SSID.c_str(), _credentials.PASS.c_str());
+    
     WebSerialLogger.println("Connecting to WiFi ..");
     _lastConnectionTry = millis();
-    /*int timeout = 10;
-    while (WiFi.status() != WL_CONNECTED) {
-        Serial.print('.');
-        delay(1000);
-        timeout--;
-        if(timeout == 0)
-        {
-            Serial.println("WIFI timeout ......");
-            return false;
-        }
-    }
-    connected = true;
-    DisplayInfo();*/
+   
     return true;
 }
 
@@ -82,7 +81,7 @@ void WIFIManagerClass::setupMQTT()
 void WIFIManagerClass::Disconnect()
 {
     WebSerialLogger.println("disonnecting from WiFi ..");
-    WiFi.disconnect();
+    wifiManager.disconnect();
     
     connecting = false;
     connected = false;
@@ -91,7 +90,7 @@ void WIFIManagerClass::Disconnect()
 void WIFIManagerClass::DisplayInfo(){
      
     WebSerialLogger.print("[*] Network information for ");
-    WebSerialLogger.println(_credentials.SSID);
+    WebSerialLogger.println(WiFi.SSID());
 
     WebSerialLogger.println("[+] BSSID : " + WiFi.BSSIDstr());
     WebSerialLogger.print("[+] Gateway IP : ");
@@ -122,6 +121,8 @@ void WIFIManagerClass::Loop()
 
     connected = WiFi.isConnected();
 
+    wifiManager.process();
+
     if(connecting && connected)
     {
         WebSerialLogger.println("WiFi connected!");
@@ -138,7 +139,7 @@ void WIFIManagerClass::Loop()
         else
         {
             JsonDocument payload;
-            payload["SSID"] = _credentials.SSID;
+            payload["SSID"] = WiFi.SSID();
             payload["BSSID"] = WiFi.BSSIDstr();
             payload["WIFI_RSSI"] = String(WiFi.RSSI());
             payload["Hostname"] = String(WiFi.getHostname());

@@ -5,6 +5,7 @@
 #include "WiFi.h"
 #endif
 #include "../Webserial/webserial.hpp"
+#include <WiFiManager.h>
 
 #ifndef WIFIMANAGER_H
 #define WIFIMANAGER_H
@@ -20,7 +21,8 @@ class WIFIManagerClass
         bool connecting = false;
         bool connected = false;
 
-        WIFICreds _credentials;
+        
+        WiFiManager wifiManager;
         unsigned long interval = 5000;
         unsigned long _lastConnectionTry = 0;
         unsigned long _lastMqttupdate = 0;
@@ -29,10 +31,10 @@ class WIFIManagerClass
         bool mqttsetup = false;
 
     public:
-
-        void Setup(String hostname, String SSID, String PASS);
+        void Setup(String hostname);
+        
         bool Connect();
-        bool Connect(String SSID, String PASS);
+ 
         void Disconnect();
         void Loop();
         void DisplayInfo();

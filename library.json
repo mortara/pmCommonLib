@@ -26,6 +26,7 @@
     "ESPAsyncWebServer": "https://github.com/ESP32Async/ESPAsyncWebServer.git",
     "PubSubClient": "https://github.com/hmueller01/pubsubclient3.git",
     "ArduinoJson": "https://github.com/bblanchon/ArduinoJson.git"
+    
   },
   "frameworks": "*",
   "platforms": "*"

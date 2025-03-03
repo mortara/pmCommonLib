@@ -7,7 +7,9 @@
 #include <WiFi.h>
 #endif
 #include "../Webserial/webserial.hpp"
+
 #include "LittleFS.h"
+
 
 #ifndef WIFIMANAGER_H
 #define WIFIMANAGER_H
@@ -37,8 +39,6 @@ class WIFIManagerClass
         
         bool connecting = false;
         bool connected = false;
-     
-
         unsigned long interval = 10000;
         unsigned long _lastConnectionTry = 0;
         unsigned long _lastMqttupdate = 0;
@@ -62,10 +62,10 @@ class WIFIManagerClass
         bool initWiFi();
 
     public:
-
         void Setup(String hostname, AsyncWebServer *webserver);
+
         bool Connect();
-        bool Connect(String SSID, String PASS);
+ 
         void Disconnect();
         void Loop();
         void DisplayInfo();

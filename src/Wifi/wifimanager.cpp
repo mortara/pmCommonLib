@@ -173,12 +173,6 @@ void WIFIManagerClass::Setup(String hostname, AsyncWebServer *server)
     }
 }
 
-bool WIFIManagerClass::Connect(String SSID, String PASS)
-{
-   
-    return Connect();
-}
-
 bool WIFIManagerClass::Connect()
 {
    
@@ -192,19 +186,19 @@ void WIFIManagerClass::setupMQTT()
 
     WebSerialLogger.println("Setting up Wifi MQTT client");
     
-    if(!MQTTConnector.SetupSensor("SSID", "sensor", "WIFI", "", "", ""))
+    if(!MQTTConnector.SetupSensor("SSID", "WIFI", "", "", ""))
     {
         WebSerialLogger.println("Unable to setup WIFI MQTT client");            
         return;
     }
 
-    MQTTConnector.SetupSensor("BSSID", "sensor", "WIFI", "", "", "");
-    MQTTConnector.SetupSensor("WIFI_RSSI", "sensor", "WIFI", "signal_strength", "dB", "mdi:sine-wave");
-    MQTTConnector.SetupSensor("Hostname", "sensor", "WIFI", "", "", "");
-    MQTTConnector.SetupSensor("IP", "sensor", "WIFI", "", "", "");
-    MQTTConnector.SetupSensor("SubnetMask", "sensor", "WIFI", "", "", "");
-    MQTTConnector.SetupSensor("Gateway", "sensor", "WIFI", "", "", "");
-    MQTTConnector.SetupSensor("DNS", "sensor", "WIFI", "", "", "");
+    MQTTConnector.SetupSensor("BSSID", "WIFI", "", "", "");
+    MQTTConnector.SetupSensor("WIFI_RSSI", "WIFI", "signal_strength", "dB", "mdi:sine-wave");
+    MQTTConnector.SetupSensor("Hostname",  "WIFI", "", "", "");
+    MQTTConnector.SetupSensor("IP", "WIFI", "", "", "");
+    MQTTConnector.SetupSensor("SubnetMask","WIFI", "", "", "");
+    MQTTConnector.SetupSensor("Gateway","WIFI", "", "", "");
+    MQTTConnector.SetupSensor("DNS", "WIFI", "", "", "");
 
     WebSerialLogger.println("WIfi mqtt setup done!");
 
@@ -214,7 +208,6 @@ void WIFIManagerClass::setupMQTT()
 void WIFIManagerClass::Disconnect()
 {
     WebSerialLogger.println("disonnecting from WiFi ..");
-    WiFi.disconnect();
     
     connecting = false;
     connected = false;
@@ -223,7 +216,7 @@ void WIFIManagerClass::Disconnect()
 void WIFIManagerClass::DisplayInfo(){
      
     WebSerialLogger.print("[*] Network information for ");
-    WebSerialLogger.println(_credentials.SSID);
+    WebSerialLogger.println(WiFi.SSID());
 
     WebSerialLogger.println("[+] BSSID : " + WiFi.BSSIDstr());
     WebSerialLogger.print("[+] Gateway IP : ");
@@ -270,7 +263,7 @@ void WIFIManagerClass::Loop()
         else
         {
             JsonDocument payload;
-            payload["SSID"] = _credentials.SSID;
+            payload["SSID"] = WiFi.SSID();
             payload["BSSID"] = WiFi.BSSIDstr();
             payload["WIFI_RSSI"] = String(WiFi.RSSI());
             payload["Hostname"] = String(WiFi.getHostname());

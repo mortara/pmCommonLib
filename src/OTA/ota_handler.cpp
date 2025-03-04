@@ -2,6 +2,8 @@
 
 void ota_handler::Start()
 {
+    Serial.println("Startup ota handler!");
+
     ArduinoOTA.onStart(std::bind(&ota_handler::onStart, this));
 
     ArduinoOTA.onEnd(std::bind(&ota_handler::onEnd, this));

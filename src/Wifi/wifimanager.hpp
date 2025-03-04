@@ -6,37 +6,36 @@
 #include <AsyncTCP.h>
 #include <WiFi.h>
 #endif
+#include "config/config_handler.hpp"
 #include "../Webserial/webserial.hpp"
 
-#include "LittleFS.h"
+
 
 
 #ifndef WIFIMANAGER_H
 #define WIFIMANAGER_H
+
+#define FORMAT_LITTLEFS_IF_FAILED true
 
 typedef struct {
     String SSID;  //stream url
     String PASS; //stations name
     String IP;
     String Gateway;
+    String DNS; 
+    String ConfigMode = "dhcp";
 } WIFICreds;
 
 extern WIFICreds _credentials;
 
-#define PARAM_INPUT_1 "ssid"
-#define PARAM_INPUT_2 "pass"
-#define PARAM_INPUT_3 "ip"
-#define PARAM_INPUT_4 "gateway"
-#define ssidPath "/ssid.txt"
-#define passPath "/pass.txt"
-#define ipPath "/ip.txt"
-#define gatewayPath "/gateway.txt"
 
+#define configFilePath "/wifi_config.txt"
 
 class WIFIManagerClass
 {
     private:
-        
+        AsyncWebServer *_WebServer;    
+
         bool connecting = false;
         bool connected = false;
         unsigned long interval = 10000;
@@ -57,12 +56,12 @@ class WIFIManagerClass
         IPAddress localGateway;
         //IPAddress localGateway(192, 168, 1, 1); //hardcoded
         
-        void initLittleFS();
+        
        
         bool initWiFi();
 
     public:
-        void Setup(String hostname, AsyncWebServer *webserver);
+        void Setup(String hostname);
 
         bool Connect();
  

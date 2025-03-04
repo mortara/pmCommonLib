@@ -299,7 +299,7 @@ void WIFIManagerClass::setupMQTT()
     if(mqttsetup)
         return;
 
-        pmCommonLib.WebSerial.println("Setting up Wifi MQTT client");
+    pmCommonLib.WebSerial.println("Setting up Wifi MQTT client");
     
     if(!pmCommonLib.MQTTConnector.SetupSensor("SSID", "WIFI", "", "", ""))
     {

@@ -12,7 +12,7 @@
 class pmCommonLibClass
 {
     private:
-
+        unsigned long previousMillis = 0;
     public:
         pmConfigHandler ConfigHandler;
         MQTTConnectorClass MQTTConnector;

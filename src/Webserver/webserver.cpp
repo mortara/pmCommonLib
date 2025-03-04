@@ -11,6 +11,7 @@ void WebServerClass::Setup()
     _webserver = new AsyncWebServer(80);
     _webserver->onNotFound(notFound);
     Serial.println("webserver done");
+    _setup = true;
 }
 
 void WebServerClass::Setup(ArRequestHandlerFunction onRequest, ArRequestHandlerFunction onNotFound)
@@ -19,6 +20,7 @@ void WebServerClass::Setup(ArRequestHandlerFunction onRequest, ArRequestHandlerF
     _webserver = new AsyncWebServer(80);
     _webserver->on("/", onRequest);
     _webserver->onNotFound(onNotFound);
+    _setup = true;
 }
 
 bool WebServerClass::IsSetup()
@@ -31,6 +33,7 @@ void WebServerClass::RegisterOn(const char *path, ArRequestHandlerFunction onReq
     if(!IsSetup())
         return;
 
+    Serial.println("Registering on-handler: " + String(method) + " " + String(path));
     _webserver->on(path, method, onRequest);
 }
 
@@ -39,6 +42,7 @@ void WebServerClass::RegisterNotFound(ArRequestHandlerFunction onRequest)
     if(!IsSetup())
         return;
 
+    Serial.println("Registering notfound-handler");
     _webserver->onNotFound(onRequest);
 }
 
@@ -53,7 +57,8 @@ void WebServerClass::Begin()
 
     if(!IsSetup())
         return;
-
+    
+    Serial.println("Starting webserver!");
     _webserver->begin();
 }
 

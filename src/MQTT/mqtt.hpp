@@ -29,24 +29,36 @@ struct MQTTMessages
     bool Retain = false;
 };
 
+typedef struct {
+    String DeviceName;
+    String ManuFacturer;
+    String Model;
+    String Broker;  
+    String Port; //stations name
+    String User;
+    String Pass;
+    bool changed = false;
+    std::function<void(char*, uint8_t*, unsigned int)> callback;
+} MQTTCreds;
+
+extern MQTTCreds _mqttcredentials;
+
+#define MQTTconfigFilePath "/mqtt_config.txt"
+
 class MQTTConnectorClass
 {
     private:
         WiFiClient *_wifiClientmqtt = nullptr;
         PubSubClient *_mqttClient = nullptr;
         bool _active = false;
-        String device_id = "randomesp32device";
+        bool _reconnectneeded = false;
         unsigned long _lastConnectAttempt;
         unsigned long _lastMqTTLoop = 0;
-        String _user = "";
-        String _pass = "";
-        String _manufacturer = "";
-        String _model = "";
+        
         bool _setup = false;
 
     public:
-        void Setup(std::function<void(char*, uint8_t*, unsigned int)> callback);
-        void Setup(String devicename, String model, String manufacturer, const char* mqttbroker, int port, String username, String password, std::function<void(char*, uint8_t*, unsigned int)> callback = NULL);
+        void Setup(std::function<void(char*, uint8_t*, unsigned int)> callback = NULL);
         void Loop();
         void PublishMessage(JsonDocument msg, String component, bool retain = false, String topic = "", MQTTClassType type = SENSOR);
         bool SendPayload(String msg, String topic, bool retain = false);

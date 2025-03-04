@@ -9,9 +9,6 @@
 #include "config/config_handler.hpp"
 #include "../Webserial/webserial.hpp"
 
-
-
-
 #ifndef WIFIMANAGER_H
 #define WIFIMANAGER_H
 
@@ -21,15 +18,16 @@ typedef struct {
     String SSID;  //stream url
     String PASS; //stations name
     String IP;
+    String Subnet;
     String Gateway;
     String DNS; 
     String ConfigMode = "dhcp";
 } WIFICreds;
 
-extern WIFICreds _credentials;
+extern WIFICreds _wificredentials;
 
 
-#define configFilePath "/wifi_config.txt"
+#define WIFIconfigFilePath "/wifi_config.txt"
 
 class WIFIManagerClass
 {

@@ -3,6 +3,9 @@
 
 void handleConfigManagerRoot(AsyncWebServerRequest *request) {
 
+    String content = "";
+    String location = "ESP device manager";
+    String pagetitle = "Main";
     String req = request->url();
     req.toLowerCase();
 
@@ -10,38 +13,43 @@ void handleConfigManagerRoot(AsyncWebServerRequest *request) {
     Serial.println("Webserver handle request ... " + req);
 
     for (std::list<ConfigPageDefinition>::iterator it = pmCommonLib.ConfigHandler.ConfigPages.begin(); it != pmCommonLib.ConfigHandler.ConfigPages.end(); ++it){
-      if(req.startsWith("/config/" + it->Name))
+      String page = "/config/" + it->Name + ".html";
+      if(req.endsWith(page))
       {
-          if(request->method() == HTTP_POST)
-          {
-            it->POSTMethod(request);
-          }
-          else
-          {
-            it->GETMethod(request);
-          }
-          return;
+        location += " -> " + it->Name;
+        pagetitle = it->Name;
+        pagetitle.toUpperCase();
+        if(request->method() == HTTP_GET)
+          content = it->GETMethod(request);
+        else
+          content = it->POSTMethod(request);
+
+        break;
       }
     }
 
-    String config_options = "No config pages registered!";
+    if(content == "")
+    {
+      content = "<p>No config pages registered!</p>";
+      if(!pmCommonLib.ConfigHandler.ConfigPages.empty())
+      {
+        content = "<div>";
 
-    if(!pmCommonLib.ConfigHandler.ConfigPages.empty())
-        config_options = "<ul>";
+        for (std::list<ConfigPageDefinition>::iterator it = pmCommonLib.ConfigHandler.ConfigPages.begin(); it != pmCommonLib.ConfigHandler.ConfigPages.end(); ++it){
+          String name = String(it->Name);
+          
+          content += "<p><a href='/config/" + it->Name + ".html'>" + name + "</a>\r\n";
+        }
 
-    for (std::list<ConfigPageDefinition>::iterator it = pmCommonLib.ConfigHandler.ConfigPages.begin(); it != pmCommonLib.ConfigHandler.ConfigPages.end(); ++it){
-        config_options += "<li><a href='/config/" + it->Name + "'>" + it->Name + "</a></ul><br>\r\n";
+        content += "</div>";
+      }
     }
-
-    if(!pmCommonLib.ConfigHandler.ConfigPages.empty())
-        config_options = "</ul>";
 
     String html = "<!DOCTYPE html>\
                 <html>\
                 <head>\
-                  <title>ESP Wi-Fi Manager</title>\
+                  <title>ESP device manager</title>\
                   <meta name='viewport' content='width=device-width, initial-scale=1'>\
-                  <link rel='icon' href='data:,'>\
                   <style>\
                         html {\
                           font-family: Arial, Helvetica, sans-serif; \
@@ -144,14 +152,18 @@ void handleConfigManagerRoot(AsyncWebServerRequest *request) {
                 </head>\
                 <body>\
                   <div class='topnav'>\
-                    <h1>ESP Wi-Fi Manager</h1>\
+                    <h1>" + location + "</h1>\
                   </div>\
                   <div class='content'>\
                     <div class='card-grid'>\
                       <div class='card'>\
-                      " + config_options +"\
+                      <h2>" + pagetitle +"</h2>\
+                      " + content +"\
                       </div>\
                     </div>\
+                  </div>\
+                  <div class='bottomnav'>\
+                    <a href='/config/'>Back</a>\
                   </div>\
                 </body>\
                 </html>";
@@ -165,11 +177,21 @@ bool pmConfigHandler::Setup()
     if(!initLittleFS())
       return false;
 
-    pmCommonLib.WebServer.RegisterOn("/config/", handleConfigManagerRoot);
-    pmCommonLib.WebServer.RegisterOn("/config/", handleConfigManagerRoot, HTTP_POST);
+    Serial.println("Config-Manager setup complete!");
     _setup = true;
     return true;
 }
+
+
+void pmConfigHandler::Begin()
+{
+    if(!_setup)
+      return;
+
+    pmCommonLib.WebServer.RegisterOn("/config/", handleConfigManagerRoot);
+    pmCommonLib.WebServer.RegisterOn("/config/", handleConfigManagerRoot, HTTP_POST);
+}
+
 
 bool pmConfigHandler::initLittleFS()
 {
@@ -246,14 +268,19 @@ JsonDocument pmConfigHandler::LoadConfigFile(const char * name)
     return doc;
 }
 
-void pmConfigHandler::RegisterConfigPage(String name, ArRequestHandlerFunction onGetRequest, ArRequestHandlerFunction onPostRequest)
+void pmConfigHandler::RegisterConfigPage(String name, std::function<String(AsyncWebServerRequest *request)> onGetRequest, std::function<String(AsyncWebServerRequest *request)> onPostRequest)
 {
+    Serial.println("Registering config-page " + name);
+
     ConfigPageDefinition newConfig;
     newConfig.Name = name;
     newConfig.GETMethod = onGetRequest;
     newConfig.POSTMethod = onPostRequest;
 
     ConfigPages.push_back(newConfig);
-}
 
-pmConfigHandler ConfigHandler;
+    String page = "/config/" + name + ".html";
+
+    pmCommonLib.WebServer.RegisterOn(page.c_str(), handleConfigManagerRoot);
+    pmCommonLib.WebServer.RegisterOn(page.c_str(), handleConfigManagerRoot, HTTP_POST);
+}

@@ -1,178 +1,130 @@
 #include "wifimanager.hpp"
 #include "../pmCommonLib.hpp"
 
-void handleWifManagerRoot(AsyncWebServerRequest *request) {
-  Serial.println("Webserver handle request ... " + request->url());
+String handleWifManagerRoot(AsyncWebServerRequest *request) {
+    Serial.println("Webserver handle request ... ");
 
-  String o1 = "";
-  String o2 = "";
+    String o1 = "";
+    String o2 = "";
 
-  if(_credentials.ConfigMode == "static")
-    o2 = "selected";
-  else
-    o1 = "selected";
+    if(_wificredentials.ConfigMode == "static")
+      o2 = "selected";
+    else
+      o1 = "selected";
 
-  String html = "<!DOCTYPE html>\
-                <html>\
-                <head>\
-                  <title>ESP Wi-Fi Manager</title>\
-                  <meta name='viewport' content='width=device-width, initial-scale=1'>\
-                  <link rel='icon' href='data:,'>\
-                  <style>\
-                        html {\
-                          font-family: Arial, Helvetica, sans-serif; \
-                          display: inline-block; \
-                          text-align: center;\
-                        }\
-                        h1 {\
-                          font-size: 1.8rem; \
-                          color: white;\
-                        }\
-                        p {\
-                          font-size: 1.4rem;\
-                        }\
-                        .topnav { \
-                          overflow: hidden; \
-                          background-color: #0A1128;\
-                        }\
-                        body {\
-                          margin: 0;\
-                        }\
-                        .content {\
-                          padding: 5%;\
-                        }\
-                        .card-grid {\
-                          max-width: 800px;\
-                          margin: 0 auto; \
-                          display: grid; \
-                          grid-gap: 2rem; \
-                          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));\
-                        }\
-                        .card {\
-                          background-color: white; \
-                          box-shadow: 2px 2px 12px 1px rgba(140,140,140,.5);\
-                        }\
-                        .card-title { \
-                          font-size: 1.2rem;\
-                          font-weight: bold;\
-                          color: #034078\
-                        }\
-                        input[type=submit] {\
-                          border: none;\
-                          color: #FEFCFB;\
-                          background-color: #034078;\
-                          padding: 15px 15px;\
-                          text-align: center;\
-                          text-decoration: none;\
-                          display: inline-block;\
-                          font-size: 16px;\
-                          width: 100px;\
-                          margin-right: 10px;\
-                          border-radius: 4px;\
-                          transition-duration: 0.4s;\
-                          }\
-                        input[type=submit]:hover {\
-                          background-color: #1282A2;\
-                        }\
-                        input[type=text], input[type=number], select {\
-                          width: 50%;\
-                          padding: 12px 20px;\
-                          margin: 18px;\
-                          display: inline-block;\
-                          border: 1px solid #ccc;\
-                          border-radius: 4px;\
-                          box-sizing: border-box;\
-                        }\
-                        label {\
-                          font-size: 1.2rem;\
-                        }\
-                        .value{\
-                          font-size: 1.2rem;\
-                          color: #1282A2;  \
-                        }\
-                        .state {\
-                          font-size: 1.2rem;\
-                          color: #1282A2;\
-                        }\
-                        button {\
-                          border: none;\
-                          color: #FEFCFB;\
-                          padding: 15px 32px;\
-                          text-align: center;\
-                          font-size: 16px;\
-                          width: 100px;\
-                          border-radius: 4px;\
-                          transition-duration: 0.4s;\
-                        }\
-                        .button-on {\
-                          background-color: #034078;\
-                        }\
-                        .button-on:hover {\
-                          background-color: #1282A2;\
-                        }\
-                        .button-off {\
-                          background-color: #858585;\
-                        }\
-                        .button-off:hover {\
-                          background-color: #252524;\
-                        }\
-                  </style>\
-                </head>\
-                <body>\
-                  <div class='topnav'>\
-                    <h1>ESP Wi-Fi Manager</h1>\
-                  </div>\
-                  <div class='content'>\
-                    <div class='card-grid'>\
-                      <div class='card'>\
-                        <form action='/' method='POST'>\
-                          <p>\
-                            <label for='ssid'>SSID</label>\
-                            <input type='text' id ='ssid' name='ssid' value='" + _credentials.SSID + "'><br>\
-                            <label for='pass'>Password</label>\
-                            <input type='text' id ='pass' name='pass' value='" + _credentials.PASS + "'><br>\
-                            <label for='ipmode'>Network configuration</label>\
-                            <select id='ipmode' name='ipmode'>\
-                              <option value='dhcp' " + o1 + ">DHCP</option>\
-                              <option value='static' " + o2 + ">Static</option>\
-                            </select><br>\
-\
-                            <label for='ip'>IP Address</label>\
-                            <input type='text' id ='ip' name='ip' value='" + _credentials.IP + "'><br>\
-\
-                            <label for='gateway'>Gateway Address</label>\
-                            <input type='text' id ='gateway' name='gateway' value='" + _credentials.Gateway + "'><br>\
-                \
-                            <input type ='submit' value ='Submit'>\
-                          </p>\
-                        </form>\
-                      </div>\
-                    </div>\
-                  </div>\
-                </body>\
-                </html>";
+    String html = "<form action='/config/mqtt.html' method='POST'>\
+                    <p>\
+                      <label for='ssid'>SSID</label>\
+                      <input type='text' id ='ssid' name='ssid' value='" + _wificredentials.SSID + "'><br>\
+                      <label for='pass'>Password</label>\
+                      <input type='text' id ='pass' name='pass' value='" + _wificredentials.PASS + "'><br>\
+                      <label for='ipmode'>Network configuration</label>\
+                      <select id='ipmode' name='ipmode'>\
+                        <option value='dhcp' " + o1 + ">DHCP</option>\
+                        <option value='static' " + o2 + ">Static</option>\
+                      </select><br>\
+                      <label for='ip'>IP Address</label>\
+                      <input type='text' id ='ip' name='ip' value='" + _wificredentials.IP + "'><br>\
+                      <label for='subnet'>Subnet</label>\
+                      <input type='text' id ='subnet' name='subnet' value='" + _wificredentials.Subnet + "'><br>\
+                      <label for='gateway'>Gateway Address</label>\
+                      <input type='text' id ='gateway' name='gateway' value='" + _wificredentials.Gateway + "'><br>\
+                      <input type ='submit' value ='Submit'>\
+                    </p>\
+                  </form>";
 
-  request->send(200, "text/html", html);
-
+    return html;
 }
 
+String handlePOSTrequest(AsyncWebServerRequest *request)
+{
+    Serial.println("Handling POST request ...");
+
+    int params = request->params();
+    for(int i=0;i<params;i++)
+    {
+        const AsyncWebParameter* p = request->getParam(i);
+        if(p->isPost())
+        {
+          // HTTP POST ssid value
+          if (p->name() == "ssid") {
+            _wificredentials.SSID = p->value();
+              Serial.print("SSID set to: ");
+              Serial.println(_wificredentials.SSID);
+          }
+          // HTTP POST pass value
+          if (p->name() == "pass") {
+            _wificredentials.PASS = p->value();
+              Serial.print("Password set to: ");
+              Serial.println(_wificredentials.PASS);
+          }
+          // HTTP POST ip value
+          if (p->name() == "ip") {
+            _wificredentials.IP = p->value();
+              Serial.print("IP Address set to: ");
+              Serial.println(_wificredentials.IP);
+          }
+          // HTTP POST gateway value
+          if (p->name() == "gateway") {
+            _wificredentials.Gateway = p->value();
+              Serial.print("Gateway set to: ");
+              Serial.println(_wificredentials.Gateway);        
+          }
+          // HTTP POST configmode value
+          if (p->name() == "ipmode") {
+            _wificredentials.ConfigMode = p->value();
+            Serial.print("ConfigMode set to: ");
+            Serial.println(_wificredentials.ConfigMode);        
+          }
+
+          if (p->name() == "subnet") {
+            _wificredentials.Subnet = p->value();
+            Serial.print("Subnet set to: ");
+            Serial.println(_wificredentials.Subnet);        
+          }
+        //Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
+        }
+    }
+
+    JsonDocument data;
+    data["SSID"] = _wificredentials.SSID;
+    data["PASS"] = _wificredentials.PASS;
+    data["IP"] = _wificredentials.IP;
+    data["Subnet"] = _wificredentials.Subnet;
+    data["Gateway"] = _wificredentials.Gateway;
+    data["ConfigMode"] = _wificredentials.ConfigMode;
+    
+    pmCommonLib.ConfigHandler.SaveConfigFile(WIFIconfigFilePath, data);
+
+    request->send(200, "text/plain", "Done. ESP will restart, connect to your router and go to IP address: " + _wificredentials.IP);
+    delay(3000);
+    ESP.restart();
+
+    return "";
+}
 
 bool WIFIManagerClass::initWiFi() {
-    if(_credentials.SSID =="" || _credentials.IP==""){
-      Serial.println("Undefined SSID or IP address.");
+    if(_wificredentials.SSID == ""){
+      Serial.println("Undefined SSID");
       return false;
     }
 
     WiFi.mode(WIFI_STA);
 
-    if(_credentials.ConfigMode == "static")
+    if(_wificredentials.ConfigMode == "static")
     {
         IPAddress localIP;
         IPAddress localGateway;
+        IPAddress subnet;
 
-        localIP.fromString(_credentials.IP.c_str());
-        localGateway.fromString(_credentials.Gateway.c_str());
-        IPAddress subnet(255, 255, 255, 0);
+        localIP.fromString(_wificredentials.IP.c_str());
+        localGateway.fromString(_wificredentials.Gateway.c_str());
+
+        if(_wificredentials.Subnet != "")
+          subnet.fromString(_wificredentials.Subnet.c_str());
+        else
+          subnet.fromString("255.255.255.0");
+
         if (!WiFi.config(localIP, localGateway, subnet)){
           Serial.println("STA Failed to configure with static IP");
           return false;
@@ -183,7 +135,7 @@ bool WIFIManagerClass::initWiFi() {
       Serial.println("DHCP enabled");
     }
 
-    WiFi.begin(_credentials.SSID.c_str(), _credentials.PASS.c_str());
+    WiFi.begin(_wificredentials.SSID.c_str(), _wificredentials.PASS.c_str());
     Serial.println("Connecting to WiFi...");
 
     unsigned long currentMillis = millis();
@@ -197,80 +149,37 @@ bool WIFIManagerClass::initWiFi() {
       }
     }
 
+    if(_wificredentials.ConfigMode == "dhcp")
+    {
+      _wificredentials.IP = WiFi.localIP().toString();
+      _wificredentials.Subnet = WiFi.subnetMask().toString();
+      _wificredentials.Gateway = WiFi.gatewayIP().toString();
+    }
+
     Serial.println(WiFi.localIP());
     return true;
 }
 
-void handlePOSTrequest(AsyncWebServerRequest *request)
-{
-    Serial.println("ServeWIFILogonPage ...");
 
-    int params = request->params();
-    for(int i=0;i<params;i++)
-    {
-        const AsyncWebParameter* p = request->getParam(i);
-        if(p->isPost())
-        {
-          // HTTP POST ssid value
-          if (p->name() == "ssid") {
-              _credentials.SSID = p->value().c_str();
-              Serial.print("SSID set to: ");
-              Serial.println(_credentials.SSID);
-          }
-          // HTTP POST pass value
-          if (p->name() == "pass") {
-              _credentials.PASS = p->value().c_str();
-              Serial.print("Password set to: ");
-              Serial.println(_credentials.PASS);
-          }
-          // HTTP POST ip value
-          if (p->name() == "ip") {
-              _credentials.IP = p->value().c_str();
-              Serial.print("IP Address set to: ");
-              Serial.println(_credentials.IP);
-          }
-          // HTTP POST gateway value
-          if (p->name() == "gateway") {
-              _credentials.Gateway = p->value().c_str();
-              Serial.print("Gateway set to: ");
-              Serial.println(_credentials.Gateway);        
-          }
-          // HTTP POST gateway value
-          if (p->name() == "configmode") {
-            _credentials.ConfigMode = p->value().c_str();
-            Serial.print("ConfigMode set to: ");
-            Serial.println(_credentials.ConfigMode);        
-          }
-        //Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
-        }
-    }
-
-    JsonDocument data;
-    data["SSID"] = _credentials.SSID;
-    data["PASS"] = _credentials.PASS;
-    data["IP"] = _credentials.IP;
-    data["Gateway"] = _credentials.Gateway;
-    data["ConfigMode"] = _credentials.ConfigMode;
-    data["DNS"] = _credentials.DNS;
-    ConfigHandler.SaveConfigFile(configFilePath, data);
-
-    request->send(200, "text/plain", "Done. ESP will restart, connect to your router and go to IP address: " + _credentials.IP);
-    delay(3000);
-    ESP.restart();
-}
 
 void WIFIManagerClass::Setup(String hostname)
 {
-    JsonDocument doc = ConfigHandler.LoadConfigFile(configFilePath);
+    Serial.println("Setting up WIFI manager");
+
+    JsonDocument doc = pmCommonLib.ConfigHandler.LoadConfigFile(WIFIconfigFilePath);
     
     if(doc["SSID"].is<String>())
     {
-        _credentials.ConfigMode = String(doc["ConfigMode"]);
-        _credentials.SSID = String(doc["SSID"]);
-        _credentials.PASS = String(doc["PASS"]);
-        _credentials.IP = String(doc["IP"]);
-        _credentials.Gateway = String(doc["Gateway"]);
-        _credentials.DNS = String(doc["DNS"]);
+        Serial.println("Reading config-file!");
+        _wificredentials.ConfigMode = String(doc["ConfigMode"].as<String>());
+        _wificredentials.SSID = String(doc["SSID"].as<String>());
+        _wificredentials.PASS = String(doc["PASS"].as<String>());
+        _wificredentials.IP = String(doc["IP"].as<String>());
+        _wificredentials.Gateway = String(doc["Gateway"].as<String>());
+        _wificredentials.Subnet = String(doc["Subnet"].as<String>());
+
+        Serial.println("SSID: " + _wificredentials.SSID);
+        Serial.println("PASS: " + _wificredentials.PASS);
     }
 
     if(!initWiFi())  
@@ -283,9 +192,14 @@ void WIFIManagerClass::Setup(String hostname)
         IPAddress IP = WiFi.softAPIP();
         Serial.print("AP IP address: ");
         Serial.println(IP); 
+
+        pmCommonLib.WebServer.RegisterOn("/", handleWifManagerRoot);
+        pmCommonLib.WebServer.RegisterOn("/", handlePOSTrequest, HTTP_POST);
     }
-    
-    pmCommonLib.ConfigHandler.RegisterConfigPage("WIFI", handleWifManagerRoot, handlePOSTrequest);
+    else
+    {
+        pmCommonLib.ConfigHandler.RegisterConfigPage("wifi", handleWifManagerRoot, handlePOSTrequest);
+    }
 }
 
 bool WIFIManagerClass::Connect()
@@ -413,4 +327,4 @@ void WIFIManagerClass::Loop()
     }*/
 }
 
-WIFICreds _credentials;
+WIFICreds _wificredentials;

@@ -1,6 +1,105 @@
 #include "mqtt.hpp"
 #include "../pmCommonLib.hpp"
 
+String mqtt_config_page(AsyncWebServerRequest *request) {
+    Serial.println("Webserver handle request ... ");
+  
+    
+    String html = "<form action='/config/mqtt.html' method='POST'>\
+                    <p>\
+                        <label for='broker'>Broker</label>\
+                        <input type='text' id ='broker' name='broker' value='" + _mqttcredentials.Broker + "'><br>\
+                        <label for='port'>Port</label>\
+                        <input type='text' id ='port' name='port' value='" + _mqttcredentials.Port + "'><br>\
+                        <label for='user'>User</label>\
+                        <input type='text' id ='user' name='user' value='" + _mqttcredentials.User + "'><br>\
+                        <label for='pass'>Password</label>\
+                        <input type='text' id ='pass' name='pass' value='" + _mqttcredentials.Pass + "'><br>\
+                        <label for='devicename'>Device name</label>\
+                        <input type='text' id ='devicename' name='devicename' value='" + _mqttcredentials.DeviceName + "'><br>\
+                        <label for='manufacturer'>Manufacturer</label>\
+                        <input type='text' id ='manufacturer' name='manufacturer' value='" + _mqttcredentials.ManuFacturer + "'><br>\
+                        <label for='model'>Model</label>\
+                        <input type='text' id ='model' name='model' value='" + _mqttcredentials.Model + "'><br>\
+                        <input type ='submit' value ='Submit'>\
+                    </p>\
+                    </form>";
+  
+    return html;
+  }
+  
+  String mqtt_config_page_POST(AsyncWebServerRequest *request)
+  {
+      Serial.println("Handling POST request ...");
+  
+      int params = request->params();
+      for(int i=0;i<params;i++)
+      {
+          const AsyncWebParameter* p = request->getParam(i);
+          if(p->isPost())
+          {
+            
+            if (p->name() == "broker") {
+                _mqttcredentials.Broker = p->value();
+                Serial.print("Broker set to: ");
+                Serial.println(_mqttcredentials.Broker);
+            }
+            
+            if (p->name() == "port") {
+                _mqttcredentials.Port = p->value();
+                Serial.print("Port set to: ");
+                Serial.println(_mqttcredentials.Port);
+            }
+            
+            if (p->name() == "user") {
+                _mqttcredentials.User = p->value();
+                Serial.print("User set to: ");
+                Serial.println(_mqttcredentials.User);
+            }
+            
+            if (p->name() == "pass") {
+                _mqttcredentials.Pass = p->value();
+                Serial.print("Password set to: ");
+                Serial.println(_mqttcredentials.Pass);        
+            }
+
+            if (p->name() == "devicename") {
+                _mqttcredentials.DeviceName = p->value();
+                Serial.print("DeviceName set to: ");
+                Serial.println(_mqttcredentials.DeviceName);        
+            }
+
+            if (p->name() == "manufacturer") {
+                _mqttcredentials.ManuFacturer = p->value();
+                Serial.print("ManuFacturer set to: ");
+                Serial.println(_mqttcredentials.ManuFacturer);        
+            }
+
+            if (p->name() == "model") {
+                _mqttcredentials.Model = p->value();
+                Serial.print("Model set to: ");
+                Serial.println(_mqttcredentials.Model);        
+            }
+          }
+      }
+
+      _mqttcredentials.changed = true;
+  
+      JsonDocument data;
+      data["Broker"] = _mqttcredentials.Broker;
+      data["Port"] = _mqttcredentials.Port;
+      data["User"] = _mqttcredentials.User;
+      data["Pass"] = _mqttcredentials.Pass;
+      data["DeviceName"] = _mqttcredentials.DeviceName;
+      data["ManuFacturer"] = _mqttcredentials.ManuFacturer;
+      data["Model"] = _mqttcredentials.Model;
+      pmCommonLib.ConfigHandler.SaveConfigFile(MQTTconfigFilePath, data);
+  
+      
+      return mqtt_config_page(request);
+  }
+
+
 void default_callback(char* topic, byte* payload, unsigned int length) {
     
     String msg;
@@ -13,36 +112,54 @@ void default_callback(char* topic, byte* payload, unsigned int length) {
 
 void MQTTConnectorClass::Setup(std::function<void(char*, uint8_t*, unsigned int)> callback)
 {
+    JsonDocument doc = pmCommonLib.ConfigHandler.LoadConfigFile(MQTTconfigFilePath);
+    
+    if(doc["Broker"].is<String>())
+    {
+        Serial.println("Reading MQTT config-file!");
+        _mqttcredentials.Broker = String(doc["Broker"].as<String>());
+        _mqttcredentials.Port = String(doc["Port"].as<String>());
+        _mqttcredentials.User = String(doc["User"].as<String>());
+        _mqttcredentials.Pass = String(doc["Pass"].as<String>());
+        _mqttcredentials.DeviceName = String(doc["DeviceName"].as<String>());
+        _mqttcredentials.ManuFacturer = String(doc["ManuFacturer"].as<String>());
+        _mqttcredentials.Model = String(doc["Model"].as<String>());
+
+        Serial.println("Broker: " + _mqttcredentials.Broker);
+        Serial.println("Port: " + _mqttcredentials.Port);
+    }
+    else
+    {
+        _mqttcredentials.Broker = "dummy";
+        _mqttcredentials.Port = "1883";
+        _mqttcredentials.User = "";
+        _mqttcredentials.Pass = "";
+        _mqttcredentials.DeviceName = WiFi.getHostname();
+        _mqttcredentials.ManuFacturer = "Patrick Mortara";
+        _mqttcredentials.Model = "v1";
+    }
+
+    _mqttcredentials.callback = callback;
+
+    _wifiClientmqtt = new WiFiClient();
+    _mqttClient = new PubSubClient(_mqttcredentials.Broker.c_str(), (uint16_t)_mqttcredentials.Port.toInt(), *_wifiClientmqtt);
+    _mqttClient->setBufferSize(4096);
 
     if(callback != NULL)
-        _mqttClient->setCallback(callback);
+        _mqttClient->setCallback(_mqttcredentials.callback);
     else
         _mqttClient->setCallback(default_callback);
+
+    if(pmCommonLib.WebServer.IsSetup())
+    {
+        pmCommonLib.ConfigHandler.RegisterConfigPage("mqtt", mqtt_config_page, mqtt_config_page_POST);
+    }
 
     Tasks = new std::list<MQTTMessages *>();
     _lastConnectAttempt = millis();
     _setup = true;
 }
 
-
-void MQTTConnectorClass::Setup(String devicename, String model, String manufacturer, const char* mqttbroker, int port, String username, String password, std::function<void(char*, uint8_t*, unsigned int)> callback)
-{
-    pmCommonLib.WebSerial.println("Initializing MQTT client. broker: " + String(mqttbroker) + ":" + String(port) + " user: " + username);
-
-
-    device_id = devicename;
-    _user = username;
-    _pass = password;
-    _manufacturer = manufacturer;
-    _model = model;
-
-    _wifiClientmqtt = new WiFiClient();
-
-    _mqttClient = new PubSubClient(mqttbroker, port, *_wifiClientmqtt);
-    _mqttClient->setBufferSize(4096);
-
-    Setup(callback);
-}
 
 bool MQTTConnectorClass::IsSetup()
 {
@@ -67,6 +184,12 @@ void MQTTConnectorClass::Loop()
         return;
     }
 
+    if(_mqttcredentials.changed)
+    {
+        _mqttClient->setServer(_mqttcredentials.Broker.c_str(), (uint16_t)_mqttcredentials.Port.toInt());
+        _active = false;
+        _mqttcredentials.changed = false;
+    }
 
     if(!_active && WiFi.status() == WL_CONNECTED && now - _lastConnectAttempt > 5000UL)
     {
@@ -101,17 +224,19 @@ void MQTTConnectorClass::Loop()
 
 bool MQTTConnectorClass::Connect()
 {
+    if(_mqttcredentials.Broker == "dummy")
+        return false;
+
     pmCommonLib.WebSerial.println("Connecting MQTT client...");
 
     if(_wifiClientmqtt == NULL)
     {
-        
         _wifiClientmqtt = new WiFiClient();
         _mqttClient->setClient(*_wifiClientmqtt);
     }
 
     _lastConnectAttempt = millis();
-    if(!_mqttClient->connect(device_id.c_str(), _user.c_str(), _pass.c_str()))
+    if(!_mqttClient->connect(_mqttcredentials.DeviceName.c_str(), _mqttcredentials.User.c_str(), _mqttcredentials.Pass.c_str()))
     {
         pmCommonLib.WebSerial.println("Could not connect to MQTT broker!");
         pmCommonLib.WebSerial.println("State: " + String(_mqttClient->state()));
@@ -133,10 +258,10 @@ bool MQTTConnectorClass::SetupSensor(String topic, String component, String devi
         return false;
 
     //
-    String header = "homeassistant/sensor/" + device_id + "_" + component ;
+    String header = "homeassistant/sensor/" + _mqttcredentials.DeviceName + "_" + component ;
     
     String config_topic = header+ "_" + topic + "/config";
-	String name = device_id + "_" + component + "_" + topic;
+	String name = _mqttcredentials.DeviceName + "_" + component + "_" + topic;
 
     pmCommonLib.WebSerial.println("Configuring switch " + config_topic);
 
@@ -161,11 +286,11 @@ bool MQTTConnectorClass::SetupSensor(String topic, String component, String devi
     
     JsonObject devobj = root["dev"].to<JsonObject>();
     JsonArray deviceids = devobj["ids"].to<JsonArray>();
-    deviceids.add(device_id);
+    deviceids.add(_mqttcredentials.DeviceName);
 
-    devobj["name"] = device_id;
-    devobj["manufacturer"] = _manufacturer;
-    devobj["model"] = _model;
+    devobj["name"] = _mqttcredentials.DeviceName;
+    devobj["manufacturer"] = _mqttcredentials.ManuFacturer;
+    devobj["model"] = _mqttcredentials.Model;
 
     PublishMessage(root, component, true, config_topic, SENSOR);
    
@@ -179,10 +304,10 @@ bool MQTTConnectorClass::SetupSwitch(String topic, String component, String devi
         return false;
 
     //
-    String header = "homeassistant/switch/" + device_id + "_" + component ;
+    String header = "homeassistant/switch/" + _mqttcredentials.DeviceName + "_" + component ;
 
     String config_topic = header+ "_" + topic + "/config";
-	String name = device_id + "_" + component + "_" + topic;
+	String name = _mqttcredentials.DeviceName + "_" + component + "_" + topic;
 
     pmCommonLib.WebSerial.println("Configuring switch " + config_topic);
 
@@ -208,11 +333,11 @@ bool MQTTConnectorClass::SetupSwitch(String topic, String component, String devi
     
     JsonObject devobj = root["dev"].to<JsonObject>();
     JsonArray deviceids = devobj["ids"].to<JsonArray>();
-    deviceids.add(device_id);
+    deviceids.add(_mqttcredentials.DeviceName);
 
-    devobj["name"] = device_id;
-    devobj["manufacturer"] = _manufacturer;
-    devobj["model"] = _model;
+    devobj["name"] = _mqttcredentials.DeviceName;
+    devobj["manufacturer"] = _mqttcredentials.ManuFacturer;
+    devobj["model"] = _mqttcredentials.Model;
 
     PublishMessage(root, component, true, config_topic, SWITCH);
    
@@ -225,10 +350,10 @@ bool MQTTConnectorClass::SetupSelect(String topic, String component, String devi
         return false;
 
     //
-    String header = "homeassistant/select/" + device_id + "_" + component ;
+    String header = "homeassistant/select/" + _mqttcredentials.DeviceName + "_" + component ;
     
     String config_topic = header+ "_" + topic + "/config";
-	String name = device_id + "_" + component + "_" + topic;
+	String name = _mqttcredentials.DeviceName + "_" + component + "_" + topic;
 
     pmCommonLib.WebSerial.println("Configuring select " + config_topic);
 
@@ -260,11 +385,11 @@ bool MQTTConnectorClass::SetupSelect(String topic, String component, String devi
 
     JsonObject devobj = root["dev"].to<JsonObject>();
     JsonArray deviceids = devobj["ids"].to<JsonArray>();
-    deviceids.add(device_id);
+    deviceids.add(_mqttcredentials.DeviceName);
 
-    devobj["name"] = device_id;
-    devobj["manufacturer"] = _manufacturer;
-    devobj["model"] = _model;
+    devobj["name"] = _mqttcredentials.DeviceName;
+    devobj["manufacturer"] = _mqttcredentials.ManuFacturer;
+    devobj["model"] = _mqttcredentials.Model;
 
     PublishMessage(root, component, true, config_topic, SELECT);
    
@@ -277,10 +402,10 @@ bool MQTTConnectorClass::SetupButton(String topic, String component, String devi
         return false;
 
     //
-    String header = "homeassistant/button/" + device_id + "_" + component ;
+    String header = "homeassistant/button/" + _mqttcredentials.DeviceName + "_" + component ;
     
     String config_topic = header + "_" + topic + "/config";
-	String name = device_id + "_" + component + "_" + topic;
+	String name = _mqttcredentials.DeviceName + "_" + component + "_" + topic;
 
     pmCommonLib.WebSerial.println("Configuring button " + config_topic);
 
@@ -306,11 +431,11 @@ bool MQTTConnectorClass::SetupButton(String topic, String component, String devi
 
     JsonObject devobj = root["dev"].to<JsonObject>();
     JsonArray deviceids = devobj["ids"].to<JsonArray>();
-    deviceids.add(device_id);
+    deviceids.add(_mqttcredentials.DeviceName);
 
-    devobj["name"] = device_id;
-    devobj["manufacturer"] = _manufacturer;
-    devobj["model"] = _model;
+    devobj["name"] = _mqttcredentials.DeviceName;
+    devobj["manufacturer"] = _mqttcredentials.ManuFacturer;
+    devobj["model"] = _mqttcredentials.Model;
 
     PublishMessage(root, component, true, config_topic, BUTTON);
    
@@ -323,9 +448,9 @@ bool MQTTConnectorClass::SetupText(String topic, String component, String device
         return false;
 
     //
-    String header = "homeassistant/text/" + device_id + "_" + component ;
+    String header = "homeassistant/text/" + _mqttcredentials.DeviceName + "_" + component ;
     String config_topic = header + "_" + topic + "/config";
-	String name = device_id + "_" + component + "_" + topic;
+	String name = _mqttcredentials.DeviceName + "_" + component + "_" + topic;
 
     pmCommonLib.WebSerial.println("Configuring text " + config_topic);
 
@@ -351,11 +476,11 @@ bool MQTTConnectorClass::SetupText(String topic, String component, String device
 
     JsonObject devobj = root["dev"].to<JsonObject>();
     JsonArray deviceids = devobj["ids"].to<JsonArray>();
-    deviceids.add(device_id);
+    deviceids.add(_mqttcredentials.DeviceName);
 
-    devobj["name"] = device_id;
-    devobj["manufacturer"] = _manufacturer;
-    devobj["model"] = _model;
+    devobj["name"] = _mqttcredentials.DeviceName;
+    devobj["manufacturer"] = _mqttcredentials.ManuFacturer;
+    devobj["model"] = _mqttcredentials.Model;
 
     PublishMessage(root, component, true, config_topic, TEXT);
    
@@ -401,7 +526,7 @@ void MQTTConnectorClass::PublishMessage(JsonDocument root, String component, boo
     else if(sensor == BUTTON)
         typ = "button";
 
-    String header = "homeassistant/" + typ + "/" + device_id + "_" + component;
+    String header = "homeassistant/" + typ + "/" + _mqttcredentials.DeviceName + "_" + component;
 
     String msg;
     size_t size = serializeJson(root, msg);
@@ -424,3 +549,6 @@ void MQTTConnectorClass::PublishMessage(JsonDocument root, String component, boo
    
     _mqttClient->loop();
 }
+
+
+MQTTCreds _mqttcredentials;

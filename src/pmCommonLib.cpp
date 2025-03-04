@@ -3,20 +3,21 @@
 
 void pmCommonLibClass::Setup(bool mqtt, bool webserial, bool ota)
 {
+
+    ConfigHandler.Setup();
+
     WebServer.Setup();
+
+    WiFiManager.Setup("");
 
     if(webserial)
     {
         WebSerial.Setup();
     }
 
-    ConfigHandler.Setup();
-
-    WiFiManager.Setup("");
-    
     if(mqtt)
     {
-        MQTTConnector.Setup("","","","",0,"","",NULL);
+        MQTTConnector.Setup(NULL);
     }
 
     if(ota)
@@ -29,12 +30,20 @@ void pmCommonLibClass::Start()
 {
     WebServer.Begin();
 
+    ConfigHandler.Begin();
+
     if(WebSerial.IsSetup())
         WebSerial.Begin(WebServer.GetServer());
 }
 
 void pmCommonLibClass::Loop()
 {
+    unsigned long currentMillis = millis();
+    if((currentMillis - previousMillis) < 100UL)
+        return;
+
+    previousMillis = currentMillis;
+
     if(OTAHandler.IsSetup())
         OTAHandler.Loop();
     

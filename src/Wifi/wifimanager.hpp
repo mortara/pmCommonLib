@@ -47,17 +47,6 @@ class WIFIManagerClass
       
         void setupMQTT();
         bool mqttsetup = false;
-
-        
-        IPAddress localIP;
-        //IPAddress localIP(192, 168, 1, 200); // hardcoded
-        String processor(const String& var);
-        // Set your Gateway IP address
-        IPAddress localGateway;
-        //IPAddress localGateway(192, 168, 1, 1); //hardcoded
-        
-        
-       
         bool initWiFi();
 
     public:
@@ -71,7 +60,5 @@ class WIFIManagerClass
         bool IsConnected();
         unsigned long LastConnectionTry();
 };
-
-extern WIFIManagerClass WIFIManager;
 
 #endif

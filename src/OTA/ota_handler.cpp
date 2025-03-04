@@ -1,25 +1,34 @@
-#include "ota_handler.h"
+#include "ota_handler.hpp"
+#include "../pmCommonLib.hpp"
 
-void ota_handler::Start()
+void OTAHandlerClass::Setup()
+{
+    _setup = true;
+}
+
+void OTAHandlerClass::Start()
 {
     Serial.println("Startup ota handler!");
+    if(!_setup)
+        return;
 
-    ArduinoOTA.onStart(std::bind(&ota_handler::onStart, this));
-
-    ArduinoOTA.onEnd(std::bind(&ota_handler::onEnd, this));
-
+    ArduinoOTA.onStart(std::bind(&OTAHandlerClass::onStart, this));
+    ArduinoOTA.onEnd(std::bind(&OTAHandlerClass::onEnd, this));
     ArduinoOTA.onProgress([this](unsigned int progress, unsigned int total) { this->onProgress(progress, total); });
-
     ArduinoOTA.onError([this](ota_error_t error) { this->onError(error); });
-      
     ArduinoOTA.begin();
 
-    WebSerialLogger.println("OTA started");
+    pmCommonLib.WebSerial.println("OTA started");
     ota_running = true;
     ota_timer = millis();
 }
 
-void ota_handler::onStart()
+bool OTAHandlerClass::IsSetup()
+{
+    return _setup;
+}
+
+void OTAHandlerClass::onStart()
 {
     String type;
     if (ArduinoOTA.getCommand() == U_FLASH) 
@@ -30,49 +39,52 @@ void ota_handler::onStart()
     }
 
     // NOTE: if updating FS this would be the place to unmount FS using FS.end()
-    WebSerialLogger.println("Start updating " + type);
+    pmCommonLib.WebSerial.println("Start updating " + type);
     OTAOnly = true;
 }
 
-void ota_handler::onEnd()
+void OTAHandlerClass::onEnd()
 {
-    WebSerialLogger.println("Done!");
-    WebSerialLogger.println("Rebooting");
+    pmCommonLib.WebSerial.println("Done!");
+    pmCommonLib.WebSerial.println("Rebooting");
 
     delay(1000);
 }
 
-void ota_handler::onProgress(unsigned int progress, unsigned int total)
+void OTAHandlerClass::onProgress(unsigned int progress, unsigned int total)
 {
     int perc = (progress / (total / 100));
 
     if(perc != last_perc)
     {
         String str = "Progress: " + String(perc) + "\r";
-        WebSerialLogger.println(str.c_str());
+        pmCommonLib.WebSerial.println(str.c_str());
         last_perc = perc;
     }
 }
 
-void ota_handler::onError(ota_error_t error)
+void OTAHandlerClass::onError(ota_error_t error)
 {
     Serial.printf("Error[%u]: ", error);
 
     if (error == OTA_AUTH_ERROR) {
-        WebSerialLogger.println("Auth Failed");
+        pmCommonLib.WebSerial.println("Auth Failed");
     } else if (error == OTA_BEGIN_ERROR) {
-        WebSerialLogger.println("Begin Failed");
+        pmCommonLib.WebSerial.println("Begin Failed");
     } else if (error == OTA_CONNECT_ERROR) {
-        WebSerialLogger.println("Connect Failed");
+        pmCommonLib.WebSerial.println("Connect Failed");
     } else if (error == OTA_RECEIVE_ERROR) {
-        WebSerialLogger.println("Receive Failed");
+        pmCommonLib.WebSerial.println("Receive Failed");
     } else if (error == OTA_END_ERROR) {
-        WebSerialLogger.println("End Failed");
+        pmCommonLib.WebSerial.println("End Failed");
     }
 }
 
-void ota_handler::Loop()
+void OTAHandlerClass::Loop()
 {
+    if(!_setup)
+        return;
+
     unsigned long now = millis();
    
     if(now - ota_timer > 100UL)

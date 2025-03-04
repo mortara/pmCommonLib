@@ -21,20 +21,14 @@ void WebServerClass::Setup(ArRequestHandlerFunction onRequest, ArRequestHandlerF
     _webserver->onNotFound(onNotFound);
 }
 
-bool WebServerClass::checkSetup()
+bool WebServerClass::IsSetup()
 {
-    if(_webserver == nullptr)
-    {
-        Serial.println("Webserver not setup");
-        return false;
-    }
-
-    return true;
+    return _setup;
 }
 
 void WebServerClass::RegisterOn(const char *path, ArRequestHandlerFunction onRequest, WebRequestMethod method)
 {
-    if(!checkSetup())
+    if(!IsSetup())
         return;
 
     _webserver->on(path, method, onRequest);
@@ -42,7 +36,7 @@ void WebServerClass::RegisterOn(const char *path, ArRequestHandlerFunction onReq
 
 void WebServerClass::RegisterNotFound(ArRequestHandlerFunction onRequest)
 {
-    if(!checkSetup())
+    if(!IsSetup())
         return;
 
     _webserver->onNotFound(onRequest);
@@ -57,7 +51,7 @@ void WebServerClass::Begin()
         _dnsServer->start(53, "*", WiFi.softAPIP());
     }
 
-    if(!checkSetup())
+    if(!IsSetup())
         return;
 
     _webserver->begin();
@@ -67,5 +61,3 @@ AsyncWebServer *WebServerClass::GetServer()
 {
     return _webserver;
 }
-
-WebServerClass WebServer;

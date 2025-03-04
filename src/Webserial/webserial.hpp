@@ -19,10 +19,11 @@ class WebSerialLoggerClass
         
         WebSerial webSerial;
         bool running = false;
-
+        bool _setup = false;
     public:
-        void Start();
+        void Setup();
         void Begin(AsyncWebServer *_server);
+        bool IsSetup();
         bool IsRunning();
         void print(const char *text);
         void print(String text = "");
@@ -33,6 +34,4 @@ class WebSerialLoggerClass
         char GetInput();
 };
 
-
-extern WebSerialLoggerClass WebSerialLogger;
 #endif

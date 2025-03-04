@@ -18,18 +18,17 @@ class WebServerClass
     private:
         AsyncWebServer *_webserver = nullptr;
         DNSServer *_dnsServer = nullptr;
-        bool checkSetup();
-
+        
+        bool _setup = false;
     public:
         void Setup();
         void Setup(ArRequestHandlerFunction onRequest, ArRequestHandlerFunction onNotFound);
+        bool IsSetup();
         AsyncWebServer *GetServer();
 
         void Begin();
         void RegisterOn(const char *path, ArRequestHandlerFunction onRequest, WebRequestMethod method = HTTP_GET);
         void RegisterNotFound(ArRequestHandlerFunction onRequest);
 } ;
-
-extern WebServerClass WebServer;
 
 #endif

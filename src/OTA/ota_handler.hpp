@@ -1,11 +1,14 @@
 
 #include "ArduinoOTA.h"
-#include "../Webserial/webserial.hpp"
 
-class ota_handler
+#ifndef PMOTA_H
+#define PMOTA_H
+
+class OTAHandlerClass
 {
     private:
         bool ota_running = false;
+        bool _setup = false;
         unsigned long ota_timer = 0;
         int last_perc = 0;
         
@@ -16,7 +19,11 @@ class ota_handler
 
     public:
         bool OTAOnly = false;
+        bool IsSetup();
 
+        void Setup();
         void Start();
         void Loop();
 };
+
+#endif

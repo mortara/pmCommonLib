@@ -15,10 +15,10 @@ void recvMsg(const uint8_t *data, size_t len)
     Serial.println(d);
 }
 
-void WebSerialLoggerClass::Start()
+void WebSerialLoggerClass::Setup()
 {
     Serial.println("Starting webserial server!");
-    
+    _setup = true;
 }
 
 void WebSerialLoggerClass::Begin(AsyncWebServer *_server)
@@ -39,6 +39,11 @@ char WebSerialLoggerClass::GetInput()
     char c = inputString[0];
     inputString = inputString.substring(1);
     return c;
+}
+
+bool WebSerialLoggerClass::IsSetup()
+{
+    return _setup;
 }
 
 bool WebSerialLoggerClass::IsRunning()
@@ -89,5 +94,3 @@ void WebSerialLoggerClass::Flush()
     if(running)
         webSerial.flush();
 }
-
-WebSerialLoggerClass WebSerialLogger;

@@ -1,4 +1,5 @@
 #include "mqtt.hpp"
+#include "../pmCommonLib.hpp"
 
 void default_callback(char* topic, byte* payload, unsigned int length) {
     
@@ -7,17 +8,30 @@ void default_callback(char* topic, byte* payload, unsigned int length) {
         char tmp = char(payload[i]);
         msg += tmp;
     }
-    WebSerialLogger.println(msg);
+    pmCommonLib.WebSerial.println(msg);
+}
+
+void MQTTConnectorClass::Setup(std::function<void(char*, uint8_t*, unsigned int)> callback)
+{
+
+    if(callback != NULL)
+        _mqttClient->setCallback(callback);
+    else
+        _mqttClient->setCallback(default_callback);
+
+    Tasks = new std::list<MQTTMessages *>();
+    _lastConnectAttempt = millis();
+    _setup = true;
 }
 
 
-void MQTTConnectorClass::Setup(String devicename, String model, String manufacturer, const char* mqttbroker, int port, String username, String password, std::function<void(char*, uint8_t*, unsigned int)> callback = NULL)
+void MQTTConnectorClass::Setup(String devicename, String model, String manufacturer, const char* mqttbroker, int port, String username, String password, std::function<void(char*, uint8_t*, unsigned int)> callback)
 {
-    WebSerialLogger.println("Initializing MQTT client. broker: " + String(mqttbroker) + ":" + String(port) + " user: " + username);
+    pmCommonLib.WebSerial.println("Initializing MQTT client. broker: " + String(mqttbroker) + ":" + String(port) + " user: " + username);
 
 
-     device_id = devicename;
-     _user = username;
+    device_id = devicename;
+    _user = username;
     _pass = password;
     _manufacturer = manufacturer;
     _model = model;
@@ -27,14 +41,12 @@ void MQTTConnectorClass::Setup(String devicename, String model, String manufactu
     _mqttClient = new PubSubClient(mqttbroker, port, *_wifiClientmqtt);
     _mqttClient->setBufferSize(4096);
 
-    if(callback != NULL)
-        _mqttClient->setCallback(callback);
-    else
-        _mqttClient->setCallback(default_callback);
+    Setup(callback);
+}
 
-    Tasks = new std::list<MQTTMessages *>();
-   
-    _lastConnectAttempt = millis();
+bool MQTTConnectorClass::IsSetup()
+{
+    return _setup;
 }
 
 bool MQTTConnectorClass::isActive()
@@ -77,7 +89,7 @@ void MQTTConnectorClass::Loop()
         Tasks->remove(bt);
         if(!ok)
         {
-            WebSerialLogger.println("unable to publish mqtt message ...");
+            pmCommonLib.WebSerial.println("unable to publish mqtt message ...");
             Tasks->push_back(bt);
             delay(1000);
         }
@@ -89,7 +101,7 @@ void MQTTConnectorClass::Loop()
 
 bool MQTTConnectorClass::Connect()
 {
-    WebSerialLogger.println("Connecting MQTT client...");
+    pmCommonLib.WebSerial.println("Connecting MQTT client...");
 
     if(_wifiClientmqtt == NULL)
     {
@@ -101,12 +113,12 @@ bool MQTTConnectorClass::Connect()
     _lastConnectAttempt = millis();
     if(!_mqttClient->connect(device_id.c_str(), _user.c_str(), _pass.c_str()))
     {
-        WebSerialLogger.println("Could not connect to MQTT broker!");
-        WebSerialLogger.println("State: " + String(_mqttClient->state()));
+        pmCommonLib.WebSerial.println("Could not connect to MQTT broker!");
+        pmCommonLib.WebSerial.println("State: " + String(_mqttClient->state()));
     }
     else
     {
-        WebSerialLogger.println("Successfully connected to MQTT broker!");
+        pmCommonLib.WebSerial.println("Successfully connected to MQTT broker!");
         _mqttClient->subscribe("motd");
         _active = true;
     }
@@ -126,7 +138,7 @@ bool MQTTConnectorClass::SetupSensor(String topic, String component, String devi
     String config_topic = header+ "_" + topic + "/config";
 	String name = device_id + "_" + component + "_" + topic;
 
-    WebSerialLogger.println("Configuring switch " + config_topic);
+    pmCommonLib.WebSerial.println("Configuring switch " + config_topic);
 
     JsonDocument root;
 
@@ -172,7 +184,7 @@ bool MQTTConnectorClass::SetupSwitch(String topic, String component, String devi
     String config_topic = header+ "_" + topic + "/config";
 	String name = device_id + "_" + component + "_" + topic;
 
-    WebSerialLogger.println("Configuring switch " + config_topic);
+    pmCommonLib.WebSerial.println("Configuring switch " + config_topic);
 
     JsonDocument root;
 
@@ -218,7 +230,7 @@ bool MQTTConnectorClass::SetupSelect(String topic, String component, String devi
     String config_topic = header+ "_" + topic + "/config";
 	String name = device_id + "_" + component + "_" + topic;
 
-    WebSerialLogger.println("Configuring select " + config_topic);
+    pmCommonLib.WebSerial.println("Configuring select " + config_topic);
 
     JsonDocument root;
 
@@ -270,7 +282,7 @@ bool MQTTConnectorClass::SetupButton(String topic, String component, String devi
     String config_topic = header + "_" + topic + "/config";
 	String name = device_id + "_" + component + "_" + topic;
 
-    WebSerialLogger.println("Configuring button " + config_topic);
+    pmCommonLib.WebSerial.println("Configuring button " + config_topic);
 
     JsonDocument root;
 
@@ -315,7 +327,7 @@ bool MQTTConnectorClass::SetupText(String topic, String component, String device
     String config_topic = header + "_" + topic + "/config";
 	String name = device_id + "_" + component + "_" + topic;
 
-    WebSerialLogger.println("Configuring text " + config_topic);
+    pmCommonLib.WebSerial.println("Configuring text " + config_topic);
 
     JsonDocument root;
 
@@ -360,12 +372,12 @@ bool MQTTConnectorClass::SendPayload(String payload, String topic, bool retain)
 
     if(!_mqttClient->publish(topic.c_str(), payload.c_str(), retain))
     {
-        WebSerialLogger.println("Error publishing data!");
-        WebSerialLogger.println("State: " + String(_mqttClient->state()));
+        pmCommonLib.WebSerial.println("Error publishing data!");
+        pmCommonLib.WebSerial.println("State: " + String(_mqttClient->state()));
 
         if(_mqttClient->state() == -3)
         {
-            WebSerialLogger.println("MQTT connection lost ...");
+            pmCommonLib.WebSerial.println("MQTT connection lost ...");
             _mqttClient->disconnect();
             _active = false;
         }
@@ -396,7 +408,7 @@ void MQTTConnectorClass::PublishMessage(JsonDocument root, String component, boo
     
     //WebSerialLogger.println("Sending mqtt message: " + String(msg) + " Topic: " + topic);
     if(size > 1024)
-        WebSerialLogger.println("Size : " + String(size));
+        pmCommonLib.WebSerial.println("Size : " + String(size));
 
     if(topic == "")
         topic = header + "/state";
@@ -412,6 +424,3 @@ void MQTTConnectorClass::PublishMessage(JsonDocument root, String component, boo
    
     _mqttClient->loop();
 }
-
-
-MQTTConnectorClass MQTTConnector;

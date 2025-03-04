@@ -1,5 +1,5 @@
 #include "i2cscanner.hpp"
-#include "../Webserial/webserial.hpp"
+#include "../pmCommonLib.hpp"
 #include <String.h>
 //
 //    FILE: MultiSpeedI2CScanner.ino
@@ -49,7 +49,7 @@ void I2CScanner::setup()
 
   wire = &Wire;
 
-  WebSerialLogger.println("");
+  pmCommonLib.WebSerial.println("");
   reset();
 }
 
@@ -62,9 +62,9 @@ void I2CScanner::loop()
   {
     case '@':
       selectedWirePort = (selectedWirePort + 1) % wirePortCount;
-      WebSerialLogger.print("<I2C PORT=Wire");
-      WebSerialLogger.print(String(selectedWirePort));
-      WebSerialLogger.println(">");
+      pmCommonLib.WebSerial.print("<I2C PORT=Wire");
+      pmCommonLib.WebSerial.print(String(selectedWirePort));
+      pmCommonLib.WebSerial.println(">");
       switch (selectedWirePort)
       {
         case 0:
@@ -106,8 +106,8 @@ void I2CScanner::loop()
       break;
     case 'd':
       delayFlag = !delayFlag;
-      WebSerialLogger.print("<delay=");
-      WebSerialLogger.println(delayFlag ? "5>" : "0>");
+      pmCommonLib.WebSerial.print("<delay=");
+      pmCommonLib.WebSerial.println(delayFlag ? "5>" : "0>");
       break;
 
     case 'e':
@@ -116,18 +116,18 @@ void I2CScanner::loop()
 
     case 'h':
       header = !header;
-      WebSerialLogger.print("<header=");
-      WebSerialLogger.println(header ? "yes>" : "no>");
+      pmCommonLib.WebSerial.print("<header=");
+      pmCommonLib.WebSerial.println(header ? "yes>" : "no>");
       break;
     case 'p':
       printAll = !printAll;
-      WebSerialLogger.print("<print=");
-      WebSerialLogger.println(printAll ? "all>" : "found>");
+      pmCommonLib.WebSerial.print("<print=");
+      pmCommonLib.WebSerial.println(printAll ? "all>" : "found>");
       break;
     case 'i':
       disableIRQ = !disableIRQ;
-      WebSerialLogger.print("<irq=");
-      WebSerialLogger.println(disableIRQ ? "diabled>" : "enabled>");
+      pmCommonLib.WebSerial.print("<irq=");
+      pmCommonLib.WebSerial.println(disableIRQ ? "diabled>" : "enabled>");
       break;
 
     case '0':
@@ -214,11 +214,11 @@ void I2CScanner::setAddress()
     addressStart = 0;
     addressEnd = 127;
   }
-  WebSerialLogger.print("<address Range = ");
-  WebSerialLogger.print(String(addressStart));
-  WebSerialLogger.print("..");
-  WebSerialLogger.print(String(addressEnd));
-  WebSerialLogger.println(">");
+  pmCommonLib.WebSerial.print("<address Range = ");
+  pmCommonLib.WebSerial.print(String(addressStart));
+  pmCommonLib.WebSerial.print("..");
+  pmCommonLib.WebSerial.print(String(addressEnd));
+  pmCommonLib.WebSerial.println(">");
 
 }
 
@@ -274,13 +274,13 @@ void I2CScanner::setSpeed(char sp)
       speeds = 5;
       break;
   }
-  WebSerialLogger.print("<speeds =");
+  pmCommonLib.WebSerial.print("<speeds =");
   for (int i = 0; i < speeds; i++)
   {
-    WebSerialLogger.print(" ");
-    WebSerialLogger.print(String(speed[i]));
+    pmCommonLib.WebSerial.print(" ");
+    pmCommonLib.WebSerial.print(String(speed[i]));
   }
-  WebSerialLogger.println(" >");
+  pmCommonLib.WebSerial.println(" >");
 }
 
 
@@ -293,7 +293,7 @@ char I2CScanner::getCommand()
   }
 
   if(c == '\0')
-    c = WebSerialLogger.GetInput();
+    c = pmCommonLib.WebSerial.GetInput();
 
   return c;
 }
@@ -301,44 +301,44 @@ char I2CScanner::getCommand()
 
 void I2CScanner::displayHelp()
 {
-  WebSerialLogger.print("\nArduino MultiSpeed I2C Scanner - ");
-  WebSerialLogger.println(version);
-  WebSerialLogger.println();
-  WebSerialLogger.print("I2C ports: ");
-  WebSerialLogger.print(String(wirePortCount));
-  WebSerialLogger.print("  Current: Wire");
-  WebSerialLogger.println(String(selectedWirePort));
-  WebSerialLogger.println("\t@ = toggle Wire - Wire1 .. Wire5 [e.g. TEENSY or Arduino Due]");
+  pmCommonLib.WebSerial.print("\nArduino MultiSpeed I2C Scanner - ");
+  pmCommonLib.WebSerial.println(version);
+  pmCommonLib.WebSerial.println();
+  pmCommonLib.WebSerial.print("I2C ports: ");
+  pmCommonLib.WebSerial.print(String(wirePortCount));
+  pmCommonLib.WebSerial.print("  Current: Wire");
+  pmCommonLib.WebSerial.println(String(selectedWirePort));
+  pmCommonLib.WebSerial.println("\t@ = toggle Wire - Wire1 .. Wire5 [e.g. TEENSY or Arduino Due]");
 
-  WebSerialLogger.println("Scan mode:");
-  WebSerialLogger.println("\ts = single scan");
-  WebSerialLogger.println("\tc = continuous scan - 1 second delay");
-  WebSerialLogger.println("\tq = quit continuous scan");
-  WebSerialLogger.println("\td = toggle latency delay between successful tests. 0 - 5 ms");
-  WebSerialLogger.println("\ti = toggle enable/disable interrupts");
+  pmCommonLib.WebSerial.println("Scan mode:");
+  pmCommonLib.WebSerial.println("\ts = single scan");
+  pmCommonLib.WebSerial.println("\tc = continuous scan - 1 second delay");
+  pmCommonLib.WebSerial.println("\tq = quit continuous scan");
+  pmCommonLib.WebSerial.println("\td = toggle latency delay between successful tests. 0 - 5 ms");
+  pmCommonLib.WebSerial.println("\ti = toggle enable/disable interrupts");
 
-  WebSerialLogger.println("Output:");
+  pmCommonLib.WebSerial.println("Output:");
 
-  WebSerialLogger.println("\tp = toggle printAll - printFound.");
-  WebSerialLogger.println("\th = toggle header - noHeader.");
-  WebSerialLogger.println("\ta = toggle address range, 0..127 - 8..119 (default)");
+  pmCommonLib.WebSerial.println("\tp = toggle printAll - printFound.");
+  pmCommonLib.WebSerial.println("\th = toggle header - noHeader.");
+  pmCommonLib.WebSerial.println("\ta = toggle address range, 0..127 - 8..119 (default)");
 
-  WebSerialLogger.println("Speeds:");
-  WebSerialLogger.println("\t0 = 100..800 KHz - step 100  (warning - can block!!)");
-  WebSerialLogger.println("\t1 = 100 KHz");
-  WebSerialLogger.println("\t2 = 200 KHz");
-  WebSerialLogger.println("\t4 = 400 KHz");
-  WebSerialLogger.println("\t9 = 50..400 KHz - step 50     < DEFAULT >");
-  WebSerialLogger.println();
-  WebSerialLogger.println("\t!! HIGH SPEEDS - WARNING - can block - not applicable for UNO");
-  WebSerialLogger.println("\t8 =  800 KHz");
-  WebSerialLogger.println("\tM = 1000 KHz");
-  WebSerialLogger.println("\tN = 3400 KHz");
-  WebSerialLogger.println("\tO = 5000 KHz");
-  WebSerialLogger.println("\tP = 100 400 1000 3400 5000 KHz (standards)");
-  WebSerialLogger.println("\n\tr = reset to startup defaults.");
-  WebSerialLogger.println("\t? = help - this page");
-  WebSerialLogger.println();
+  pmCommonLib.WebSerial.println("Speeds:");
+  pmCommonLib.WebSerial.println("\t0 = 100..800 KHz - step 100  (warning - can block!!)");
+  pmCommonLib.WebSerial.println("\t1 = 100 KHz");
+  pmCommonLib.WebSerial.println("\t2 = 200 KHz");
+  pmCommonLib.WebSerial.println("\t4 = 400 KHz");
+  pmCommonLib.WebSerial.println("\t9 = 50..400 KHz - step 50     < DEFAULT >");
+  pmCommonLib.WebSerial.println();
+  pmCommonLib.WebSerial.println("\t!! HIGH SPEEDS - WARNING - can block - not applicable for UNO");
+  pmCommonLib.WebSerial.println("\t8 =  800 KHz");
+  pmCommonLib.WebSerial.println("\tM = 1000 KHz");
+  pmCommonLib.WebSerial.println("\tN = 3400 KHz");
+  pmCommonLib.WebSerial.println("\tO = 5000 KHz");
+  pmCommonLib.WebSerial.println("\tP = 100 400 1000 3400 5000 KHz (standards)");
+  pmCommonLib.WebSerial.println("\n\tr = reset to startup defaults.");
+  pmCommonLib.WebSerial.println("\t? = help - this page");
+  pmCommonLib.WebSerial.println();
 }
 
 void I2CScanner::I2Cscan()
@@ -350,18 +350,18 @@ void I2CScanner::I2Cscan()
 
   if (header)
   {
-    WebSerialLogger.print("TIME\tDEC\tHEX\t");
+    pmCommonLib.WebSerial.print("TIME\tDEC\tHEX\t");
     for (uint8_t s = 0; s < speeds; s++)
     {
-      WebSerialLogger.print("\t");
-      WebSerialLogger.print(String(speed[s]));
+      pmCommonLib.WebSerial.print("\t");
+      pmCommonLib.WebSerial.print(String(speed[s]));
     }
-    WebSerialLogger.println("\t[KHz]");
+    pmCommonLib.WebSerial.println("\t[KHz]");
     for (uint8_t s = 0; s < speeds + 5; s++)
     {
-      WebSerialLogger.print("--------");
+      pmCommonLib.WebSerial.print("--------");
     }
-    WebSerialLogger.println();
+    pmCommonLib.WebSerial.println();
     delay(100);
   }
 
@@ -399,24 +399,24 @@ void I2CScanner::I2Cscan()
 
     if (printLine)
     {
-      WebSerialLogger.print(String(millis()));
-      WebSerialLogger.print("\t");
-      WebSerialLogger.print(String(address));
-      WebSerialLogger.print("\t0x");
-      if (address < 0x10) WebSerialLogger.print("0");
+      pmCommonLib.WebSerial.print(String(millis()));
+      pmCommonLib.WebSerial.print("\t");
+      pmCommonLib.WebSerial.print(String(address));
+      pmCommonLib.WebSerial.print("\t0x");
+      if (address < 0x10) pmCommonLib.WebSerial.print("0");
 
       char hexadecimalnum [3];
       sprintf(hexadecimalnum, "%X", address);
 
-      WebSerialLogger.print(hexadecimalnum);
-      WebSerialLogger.print("\t");
+      pmCommonLib.WebSerial.print(hexadecimalnum);
+      pmCommonLib.WebSerial.print("\t");
 
       for (uint8_t s = 0; s < speeds ; s++)
       {
-        WebSerialLogger.print("\t");
-        WebSerialLogger.print(found[s] ? "V" : ".");
+        pmCommonLib.WebSerial.print("\t");
+        pmCommonLib.WebSerial.print(found[s] ? "V" : ".");
       }
-      WebSerialLogger.println();
+      pmCommonLib.WebSerial.println();
     }
   }
 
@@ -443,11 +443,11 @@ void I2CScanner::I2Cscan()
   stopScan = millis();
   if (header)
   {
-    WebSerialLogger.println();
-    WebSerialLogger.print(String(count));
-    WebSerialLogger.print(" devices found in ");
-    WebSerialLogger.print(String(stopScan - startScan));
-    WebSerialLogger.println(" milliseconds.");
+    pmCommonLib.WebSerial.println();
+    pmCommonLib.WebSerial.print(String(count));
+    pmCommonLib.WebSerial.print(" devices found in ");
+    pmCommonLib.WebSerial.print(String(stopScan - startScan));
+    pmCommonLib.WebSerial.println(" milliseconds.");
   }
 
   interrupts();

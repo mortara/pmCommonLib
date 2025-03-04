@@ -1,19 +1,16 @@
 #include "wifimanager.hpp"
-#include "../MQTT/mqtt.hpp"
-#include "../Webserver/webserver.hpp"
+#include "../pmCommonLib.hpp"
 
-
-
-void handleWifManagerIndex(AsyncWebServerRequest *request) {
-    
+void handleWifManagerRoot(AsyncWebServerRequest *request) {
   Serial.println("Webserver handle request ... " + request->url());
 
+  String o1 = "";
+  String o2 = "";
 
-
-  String SSID = _credentials.SSID;
-  String PASS = _credentials.PASS;
-
-
+  if(_credentials.ConfigMode == "static")
+    o2 = "selected";
+  else
+    o1 = "selected";
 
   String html = "<!DOCTYPE html>\
                 <html>\
@@ -21,7 +18,105 @@ void handleWifManagerIndex(AsyncWebServerRequest *request) {
                   <title>ESP Wi-Fi Manager</title>\
                   <meta name='viewport' content='width=device-width, initial-scale=1'>\
                   <link rel='icon' href='data:,'>\
-                  <link rel='stylesheet' type='text/css' href='style.css'>\
+                  <style>\
+                        html {\
+                          font-family: Arial, Helvetica, sans-serif; \
+                          display: inline-block; \
+                          text-align: center;\
+                        }\
+                        h1 {\
+                          font-size: 1.8rem; \
+                          color: white;\
+                        }\
+                        p {\
+                          font-size: 1.4rem;\
+                        }\
+                        .topnav { \
+                          overflow: hidden; \
+                          background-color: #0A1128;\
+                        }\
+                        body {\
+                          margin: 0;\
+                        }\
+                        .content {\
+                          padding: 5%;\
+                        }\
+                        .card-grid {\
+                          max-width: 800px;\
+                          margin: 0 auto; \
+                          display: grid; \
+                          grid-gap: 2rem; \
+                          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));\
+                        }\
+                        .card {\
+                          background-color: white; \
+                          box-shadow: 2px 2px 12px 1px rgba(140,140,140,.5);\
+                        }\
+                        .card-title { \
+                          font-size: 1.2rem;\
+                          font-weight: bold;\
+                          color: #034078\
+                        }\
+                        input[type=submit] {\
+                          border: none;\
+                          color: #FEFCFB;\
+                          background-color: #034078;\
+                          padding: 15px 15px;\
+                          text-align: center;\
+                          text-decoration: none;\
+                          display: inline-block;\
+                          font-size: 16px;\
+                          width: 100px;\
+                          margin-right: 10px;\
+                          border-radius: 4px;\
+                          transition-duration: 0.4s;\
+                          }\
+                        input[type=submit]:hover {\
+                          background-color: #1282A2;\
+                        }\
+                        input[type=text], input[type=number], select {\
+                          width: 50%;\
+                          padding: 12px 20px;\
+                          margin: 18px;\
+                          display: inline-block;\
+                          border: 1px solid #ccc;\
+                          border-radius: 4px;\
+                          box-sizing: border-box;\
+                        }\
+                        label {\
+                          font-size: 1.2rem;\
+                        }\
+                        .value{\
+                          font-size: 1.2rem;\
+                          color: #1282A2;  \
+                        }\
+                        .state {\
+                          font-size: 1.2rem;\
+                          color: #1282A2;\
+                        }\
+                        button {\
+                          border: none;\
+                          color: #FEFCFB;\
+                          padding: 15px 32px;\
+                          text-align: center;\
+                          font-size: 16px;\
+                          width: 100px;\
+                          border-radius: 4px;\
+                          transition-duration: 0.4s;\
+                        }\
+                        .button-on {\
+                          background-color: #034078;\
+                        }\
+                        .button-on:hover {\
+                          background-color: #1282A2;\
+                        }\
+                        .button-off {\
+                          background-color: #858585;\
+                        }\
+                        .button-off:hover {\
+                          background-color: #252524;\
+                        }\
+                  </style>\
                 </head>\
                 <body>\
                   <div class='topnav'>\
@@ -33,24 +128,21 @@ void handleWifManagerIndex(AsyncWebServerRequest *request) {
                         <form action='/' method='POST'>\
                           <p>\
                             <label for='ssid'>SSID</label>\
-                            <input type='text' id ='ssid' name='ssid' value='" + SSID + "'><br>\
+                            <input type='text' id ='ssid' name='ssid' value='" + _credentials.SSID + "'><br>\
                             <label for='pass'>Password</label>\
-                            <input type='text' id ='pass' name='pass' value='" + PASS + "'><br>\
+                            <input type='text' id ='pass' name='pass' value='" + _credentials.PASS + "'><br>\
                             <label for='ipmode'>Network configuration</label>\
                             <select id='ipmode' name='ipmode'>\
-                              <option value='dhcp'>DHCP</option>\
-                              <option value='static'>Static</option>\
+                              <option value='dhcp' " + o1 + ">DHCP</option>\
+                              <option value='static' " + o2 + ">Static</option>\
                             </select><br>\
 \
                             <label for='ip'>IP Address</label>\
-                            <input type='text' id ='ip' name='ip' value='192.168.1.200'><br>\
+                            <input type='text' id ='ip' name='ip' value='" + _credentials.IP + "'><br>\
 \
                             <label for='gateway'>Gateway Address</label>\
-                            <input type='text' id ='gateway' name='gateway' value='192.168.1.1'><br>\
-                            \
-                            <label for='dns'>DSN Server</label>\
-                            <input type='text' id ='dns' name='dns' value='192.168.1.1'><br>\
-\
+                            <input type='text' id ='gateway' name='gateway' value='" + _credentials.Gateway + "'><br>\
+                \
                             <input type ='submit' value ='Submit'>\
                           </p>\
                         </form>\
@@ -64,141 +156,20 @@ void handleWifManagerIndex(AsyncWebServerRequest *request) {
 
 }
 
-void handleWifManagerStyle(AsyncWebServerRequest *request) {
-    
-  Serial.println("Webserver style.css request ...");
 
-
-  String html = "html {\
-  font-family: Arial, Helvetica, sans-serif; \
-  display: inline-block; \
-  text-align: center;\
-}\
-h1 {\
-  font-size: 1.8rem; \
-  color: white;\
-}\
-p {\
-  font-size: 1.4rem;\
-}\
-.topnav { \
-  overflow: hidden; \
-  background-color: #0A1128;\
-}\
-body {\
-  margin: 0;\
-}\
-.content {\
-  padding: 5%;\
-}\
-.card-grid {\
-  max-width: 800px;\
-  margin: 0 auto; \
-  display: grid; \
-  grid-gap: 2rem; \
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));\
-}\
-.card {\
-  background-color: white; \
-  box-shadow: 2px 2px 12px 1px rgba(140,140,140,.5);\
-}\
-.card-title { \
-  font-size: 1.2rem;\
-  font-weight: bold;\
-  color: #034078\
-}\
-input[type=submit] {\
-  border: none;\
-  color: #FEFCFB;\
-  background-color: #034078;\
-  padding: 15px 15px;\
-  text-align: center;\
-  text-decoration: none;\
-  display: inline-block;\
-  font-size: 16px;\
-  width: 100px;\
-  margin-right: 10px;\
-  border-radius: 4px;\
-  transition-duration: 0.4s;\
-  }\
-input[type=submit]:hover {\
-  background-color: #1282A2;\
-}\
-input[type=text], input[type=number], select {\
-  width: 50%;\
-  padding: 12px 20px;\
-  margin: 18px;\
-  display: inline-block;\
-  border: 1px solid #ccc;\
-  border-radius: 4px;\
-  box-sizing: border-box;\
-}\
-label {\
-  font-size: 1.2rem;\
-}\
-.value{\
-  font-size: 1.2rem;\
-  color: #1282A2;  \
-}\
-.state {\
-  font-size: 1.2rem;\
-  color: #1282A2;\
-}\
-button {\
-  border: none;\
-  color: #FEFCFB;\
-  padding: 15px 32px;\
-  text-align: center;\
-  font-size: 16px;\
-  width: 100px;\
-  border-radius: 4px;\
-  transition-duration: 0.4s;\
-}\
-.button-on {\
-  background-color: #034078;\
-}\
-.button-on:hover {\
-  background-color: #1282A2;\
-}\
-.button-off {\
-  background-color: #858585;\
-}\
-.button-off:hover {\
-  background-color: #252524;\
-}";
-
-  request->send(200, "text/css", html);
-
-}
-
-void handleWifManagerRoot(AsyncWebServerRequest *request) 
-{
-    String req = request->url();
-    req.toLowerCase();
-
-    Serial.println("handling request " + req);
-
-    if(req.endsWith("style.css"))
-    {
-        handleWifManagerStyle(request);
-        return;
-    }
-
-    handleWifManagerIndex(request);
-}
-
-  
-
-  bool WIFIManagerClass::initWiFi() {
+bool WIFIManagerClass::initWiFi() {
     if(_credentials.SSID =="" || _credentials.IP==""){
       Serial.println("Undefined SSID or IP address.");
       return false;
     }
-  
+
     WiFi.mode(WIFI_STA);
 
     if(_credentials.ConfigMode == "static")
     {
+        IPAddress localIP;
+        IPAddress localGateway;
+
         localIP.fromString(_credentials.IP.c_str());
         localGateway.fromString(_credentials.Gateway.c_str());
         IPAddress subnet(255, 255, 255, 0);
@@ -214,10 +185,10 @@ void handleWifManagerRoot(AsyncWebServerRequest *request)
 
     WiFi.begin(_credentials.SSID.c_str(), _credentials.PASS.c_str());
     Serial.println("Connecting to WiFi...");
-  
+
     unsigned long currentMillis = millis();
     previousMillis = currentMillis;
-  
+
     while(WiFi.status() != WL_CONNECTED) {
       currentMillis = millis();
       if (currentMillis - previousMillis >= interval) {
@@ -225,28 +196,21 @@ void handleWifManagerRoot(AsyncWebServerRequest *request)
         return false;
       }
     }
-  
+
     Serial.println(WiFi.localIP());
     return true;
-  }
-
-  String WIFIManagerClass::processor(const String& var) {
-    if(var == "STATE") {
-     
-    }
-    return String();
-  }
-
-  
+}
 
 void handlePOSTrequest(AsyncWebServerRequest *request)
 {
-  Serial.println("ServeWIFILogonPage ...");
+    Serial.println("ServeWIFILogonPage ...");
 
     int params = request->params();
-    for(int i=0;i<params;i++){
+    for(int i=0;i<params;i++)
+    {
         const AsyncWebParameter* p = request->getParam(i);
-        if(p->isPost()){
+        if(p->isPost())
+        {
           // HTTP POST ssid value
           if (p->name() == "ssid") {
               _credentials.SSID = p->value().c_str();
@@ -276,7 +240,7 @@ void handlePOSTrequest(AsyncWebServerRequest *request)
             _credentials.ConfigMode = p->value().c_str();
             Serial.print("ConfigMode set to: ");
             Serial.println(_credentials.ConfigMode);        
-        }
+          }
         //Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
         }
     }
@@ -299,7 +263,7 @@ void WIFIManagerClass::Setup(String hostname)
 {
     JsonDocument doc = ConfigHandler.LoadConfigFile(configFilePath);
     
-    if(doc.containsKey("SSID"))
+    if(doc["SSID"].is<String>())
     {
         _credentials.ConfigMode = String(doc["ConfigMode"]);
         _credentials.SSID = String(doc["SSID"]);
@@ -313,25 +277,15 @@ void WIFIManagerClass::Setup(String hostname)
     {
         // Connect to Wi-Fi network with SSID and password
         Serial.println("Setting AP (Access Point)");
-        // NULL sets an open Access Point
-        
+       
         WiFi.softAP("ESP-WIFI-MANAGER", NULL, 7);
 
         IPAddress IP = WiFi.softAPIP();
         Serial.print("AP IP address: ");
         Serial.println(IP); 
-
-        WebServer.RegisterOn("/", handleWifManagerRoot);
-        WebServer.RegisterOn("/", handlePOSTrequest, HTTP_POST);
-
     }
-    else
-    {
-        WebServer.RegisterOn("/config", handleWifManagerRoot);
-        WebServer.RegisterOn("/config", handlePOSTrequest, HTTP_POST);
-
-    }
-
+    
+    pmCommonLib.ConfigHandler.RegisterConfigPage("WIFI", handleWifManagerRoot, handlePOSTrequest);
 }
 
 bool WIFIManagerClass::Connect()
@@ -345,30 +299,30 @@ void WIFIManagerClass::setupMQTT()
     if(mqttsetup)
         return;
 
-    WebSerialLogger.println("Setting up Wifi MQTT client");
+        pmCommonLib.WebSerial.println("Setting up Wifi MQTT client");
     
-    if(!MQTTConnector.SetupSensor("SSID", "WIFI", "", "", ""))
+    if(!pmCommonLib.MQTTConnector.SetupSensor("SSID", "WIFI", "", "", ""))
     {
-        WebSerialLogger.println("Unable to setup WIFI MQTT client");            
+        pmCommonLib.WebSerial.println("Unable to setup WIFI MQTT client");            
         return;
     }
 
-    MQTTConnector.SetupSensor("BSSID", "WIFI", "", "", "");
-    MQTTConnector.SetupSensor("WIFI_RSSI", "WIFI", "signal_strength", "dB", "mdi:sine-wave");
-    MQTTConnector.SetupSensor("Hostname",  "WIFI", "", "", "");
-    MQTTConnector.SetupSensor("IP", "WIFI", "", "", "");
-    MQTTConnector.SetupSensor("SubnetMask","WIFI", "", "", "");
-    MQTTConnector.SetupSensor("Gateway","WIFI", "", "", "");
-    MQTTConnector.SetupSensor("DNS", "WIFI", "", "", "");
+    pmCommonLib.MQTTConnector.SetupSensor("BSSID", "WIFI", "", "", "");
+    pmCommonLib.MQTTConnector.SetupSensor("WIFI_RSSI", "WIFI", "signal_strength", "dB", "mdi:sine-wave");
+    pmCommonLib.MQTTConnector.SetupSensor("Hostname",  "WIFI", "", "", "");
+    pmCommonLib.MQTTConnector.SetupSensor("IP", "WIFI", "", "", "");
+    pmCommonLib.MQTTConnector.SetupSensor("SubnetMask","WIFI", "", "", "");
+    pmCommonLib.MQTTConnector.SetupSensor("Gateway","WIFI", "", "", "");
+    pmCommonLib.MQTTConnector.SetupSensor("DNS", "WIFI", "", "", "");
 
-    WebSerialLogger.println("WIfi mqtt setup done!");
+    pmCommonLib.WebSerial.println("WIfi mqtt setup done!");
 
     mqttsetup = true;
 }
 
 void WIFIManagerClass::Disconnect()
 {
-    WebSerialLogger.println("disonnecting from WiFi ..");
+    pmCommonLib.WebSerial.println("disonnecting from WiFi ..");
     
     connecting = false;
     connected = false;
@@ -378,28 +332,28 @@ void WIFIManagerClass::DisplayInfo(){
      
   if(WiFi.getMode() == WIFI_AP)
   {
-    WebSerialLogger.println("[*] SoftAp is running ");
-    WebSerialLogger.print("[+] ESP32 Hostname : ");
-    WebSerialLogger.println(WiFi.getHostname());
-    WebSerialLogger.print("[+] ESP32 IP : ");
-    WebSerialLogger.println(WiFi.softAPIP().toString());
+    pmCommonLib.WebSerial.println("[*] SoftAp is running ");
+    pmCommonLib.WebSerial.print("[+] ESP32 Hostname : ");
+    pmCommonLib.WebSerial.println(WiFi.getHostname());
+    pmCommonLib.WebSerial.print("[+] ESP32 IP : ");
+    pmCommonLib.WebSerial.println(WiFi.softAPIP().toString());
   }
   else
   {
   
-    WebSerialLogger.print("[*] Network information for ");
-    WebSerialLogger.println(WiFi.SSID());
+    pmCommonLib.WebSerial.print("[*] Network information for ");
+    pmCommonLib.WebSerial.println(WiFi.SSID());
 
-    WebSerialLogger.println("[+] BSSID : " + WiFi.BSSIDstr());
-    WebSerialLogger.print("[+] Gateway IP : ");
-    WebSerialLogger.println(WiFi.gatewayIP().toString());
-    WebSerialLogger.print("[+] DNS IP : ");
-    WebSerialLogger.println(WiFi.dnsIP().toString());   
-    WebSerialLogger.println((String)"[+] RSSI : " + String(WiFi.RSSI()) + " dB");
-    WebSerialLogger.print("[+] ESP32 IP : ");
-    WebSerialLogger.println(WiFi.localIP().toString());
-    WebSerialLogger.print("[+] Subnet Mask : ");
-    WebSerialLogger.println(WiFi.subnetMask().toString());
+    pmCommonLib.WebSerial.println("[+] BSSID : " + WiFi.BSSIDstr());
+    pmCommonLib.WebSerial.print("[+] Gateway IP : ");
+    pmCommonLib.WebSerial.println(WiFi.gatewayIP().toString());
+    pmCommonLib.WebSerial.print("[+] DNS IP : ");
+    pmCommonLib.WebSerial.println(WiFi.dnsIP().toString());   
+    pmCommonLib.WebSerial.println((String)"[+] RSSI : " + String(WiFi.RSSI()) + " dB");
+    pmCommonLib.WebSerial.print("[+] ESP32 IP : ");
+    pmCommonLib.WebSerial.println(WiFi.localIP().toString());
+    pmCommonLib.WebSerial.print("[+] Subnet Mask : ");
+    pmCommonLib.WebSerial.println(WiFi.subnetMask().toString());
   } 
 }
 
@@ -421,12 +375,12 @@ void WIFIManagerClass::Loop()
 
     if(connecting && connected)
     {
-        WebSerialLogger.println("WiFi connected!");
+        pmCommonLib.WebSerial.println("WiFi connected!");
         connecting = false;
         DisplayInfo();
     }
 
-    if(currentMillis - _lastMqttupdate > 30000 && connected && MQTTConnector.isActive())
+    if(currentMillis - _lastMqttupdate > 30000 && connected && pmCommonLib.MQTTConnector.isActive())
     {
         if(!mqttsetup)
         {
@@ -444,7 +398,7 @@ void WIFIManagerClass::Loop()
             payload["Gateway"] = WiFi.gatewayIP().toString();
             payload["DNS"] = WiFi.dnsIP().toString();;
 
-            MQTTConnector.PublishMessage(payload, "WIFI");
+            pmCommonLib.MQTTConnector.PublishMessage(payload, "WIFI");
             _lastMqttupdate = currentMillis;
         }
     }
@@ -460,4 +414,3 @@ void WIFIManagerClass::Loop()
 }
 
 WIFICreds _credentials;
-WIFIManagerClass WIFIManager;

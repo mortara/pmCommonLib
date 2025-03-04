@@ -7,7 +7,6 @@
 #endif
 #include <WiFiClient.h>
 #include <ArduinoJson.h>
-#include "../Webserial/webserial.hpp"
 #include <list>
 #include <vector>
 
@@ -43,13 +42,16 @@ class MQTTConnectorClass
         String _pass = "";
         String _manufacturer = "";
         String _model = "";
-        
+        bool _setup = false;
+
     public:
-        void Setup(String devicename, String model, String manufacturer, const char* mqttbroker, int port, String username, String password, std::function<void(char*, uint8_t*, unsigned int)> callback);
+        void Setup(std::function<void(char*, uint8_t*, unsigned int)> callback);
+        void Setup(String devicename, String model, String manufacturer, const char* mqttbroker, int port, String username, String password, std::function<void(char*, uint8_t*, unsigned int)> callback = NULL);
         void Loop();
         void PublishMessage(JsonDocument msg, String component, bool retain = false, String topic = "", MQTTClassType type = SENSOR);
         bool SendPayload(String msg, String topic, bool retain = false);
         bool isActive();
+        bool IsSetup();
         bool SetupSensor(String topic, String component, String deviceclass = "", String unit = "", String icon = "");
         bool SetupSwitch(String topic, String component, String deviceclass, String icon);
         bool SetupSelect(String topic, String component, String deviceclass, String icon, std::vector<String> options);
@@ -60,7 +62,5 @@ class MQTTConnectorClass
         std::list<MQTTMessages *>* Tasks = nullptr;
       
 };
-
-extern MQTTConnectorClass MQTTConnector;
 
 #endif

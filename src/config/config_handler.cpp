@@ -268,7 +268,7 @@ JsonDocument pmConfigHandler::LoadConfigFile(const char * name)
     return doc;
 }
 
-void pmConfigHandler::RegisterConfigPage(String name, std::function<String(AsyncWebServerRequest *request)> onGetRequest, std::function<String(AsyncWebServerRequest *request)> onPostRequest)
+void pmConfigHandler::RegisterConfigPage(String name, ConfigHTTPRegisterFunction onGetRequest, ConfigHTTPRegisterFunction onPostRequest)
 {
     Serial.println("Registering config-page " + name);
 

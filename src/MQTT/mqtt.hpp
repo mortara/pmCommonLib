@@ -9,6 +9,7 @@
 #include <ArduinoJson.h>
 #include <list>
 #include <vector>
+#include "ESPAsyncWebServer.h"
 
 #ifndef MQTTCONNECTOR_H
 #define MQTTCONNECTOR_H
@@ -29,6 +30,8 @@ struct MQTTMessages
     bool Retain = false;
 };
 
+typedef std::function<void(char*, uint8_t*, unsigned int)> MQTTCallBackFunction;
+
 typedef struct {
     String DeviceName;
     String ManuFacturer;
@@ -38,10 +41,13 @@ typedef struct {
     String User;
     String Pass;
     bool changed = false;
-    std::function<void(char*, uint8_t*, unsigned int)> callback;
+    bool AllowChanges = true;
+    MQTTCallBackFunction callback;
 } MQTTCreds;
 
 extern MQTTCreds _mqttcredentials;
+
+
 
 #define MQTTconfigFilePath "/mqtt_config.txt"
 
@@ -52,13 +58,18 @@ class MQTTConnectorClass
         PubSubClient *_mqttClient = nullptr;
         bool _active = false;
         bool _reconnectneeded = false;
+        
         unsigned long _lastConnectAttempt;
         unsigned long _lastMqTTLoop = 0;
         
         bool _setup = false;
 
+        
+
     public:
-        void Setup(std::function<void(char*, uint8_t*, unsigned int)> callback = NULL);
+        void Setup(MQTTCallBackFunction callback = NULL);
+        void Begin();
+        void Configure(String broker, int port, String user, String password, String devicename, String manufacturer, String model, bool allowchanges = true);
         void Loop();
         void PublishMessage(JsonDocument msg, String component, bool retain = false, String topic = "", MQTTClassType type = SENSOR);
         bool SendPayload(String msg, String topic, bool retain = false);
@@ -70,6 +81,10 @@ class MQTTConnectorClass
         bool SetupButton(String topic, String component, String deviceclass, String icon);
         bool SetupText(String topic, String component, String deviceclass, String icon);
         bool Connect();
+
+        String mqtt_config_page(AsyncWebServerRequest *request);
+        String mqtt_config_page_POST(AsyncWebServerRequest *request);
+        void default_callback(char* topic, byte* payload, unsigned int length);
 
         std::list<MQTTMessages *>* Tasks = nullptr;
       

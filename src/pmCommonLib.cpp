@@ -1,10 +1,15 @@
 #include "pmCommonLib.hpp"
 
 
-void pmCommonLibClass::Setup(bool mqtt, bool webserial, bool ota)
+void pmCommonLibClass::Setup(bool mqtt, bool webserial, bool ota, bool general)
 {
 
     ConfigHandler.Setup();
+
+    if(general)
+    {
+        Settings.Setup();
+    }
 
     WebServer.Setup();
 
@@ -29,6 +34,14 @@ void pmCommonLibClass::Setup(bool mqtt, bool webserial, bool ota)
 void pmCommonLibClass::Start()
 {
     WebServer.Begin();
+
+    if(Settings.IsSetup())
+        Settings.Begin();
+
+    WiFiManager.Begin();
+
+    if(MQTTConnector.IsSetup())
+        MQTTConnector.Begin();
 
     ConfigHandler.Begin();
 

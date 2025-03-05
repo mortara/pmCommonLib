@@ -1,7 +1,7 @@
 #include "wifimanager.hpp"
 #include "../pmCommonLib.hpp"
 
-String handleWifManagerRoot(AsyncWebServerRequest *request) {
+String WIFIManagerClass::handleWifManagerRoot(AsyncWebServerRequest *request) {
     Serial.println("Webserver handle request ... ");
 
     String o1 = "";
@@ -36,7 +36,7 @@ String handleWifManagerRoot(AsyncWebServerRequest *request) {
     return html;
 }
 
-String handlePOSTrequest(AsyncWebServerRequest *request)
+String WIFIManagerClass::handlePOSTrequest(AsyncWebServerRequest *request)
 {
     Serial.println("Handling POST request ...");
 
@@ -193,13 +193,25 @@ void WIFIManagerClass::Setup(String hostname)
         Serial.print("AP IP address: ");
         Serial.println(IP); 
 
-        pmCommonLib.WebServer.RegisterOn("/", handleWifManagerRoot);
-        pmCommonLib.WebServer.RegisterOn("/", handlePOSTrequest, HTTP_POST);
+        captiveportalactive = true;
     }
-    else
-    {
-        pmCommonLib.ConfigHandler.RegisterConfigPage("wifi", handleWifManagerRoot, handlePOSTrequest);
-    }
+    
+}
+
+void WIFIManagerClass::Begin()
+{
+  ConfigHTTPRegisterFunction f1 = std::bind(&WIFIManagerClass::handleWifManagerRoot, this, std::placeholders::_1);
+  ConfigHTTPRegisterFunction f2 = std::bind(&WIFIManagerClass::handlePOSTrequest, this, std::placeholders::_1);
+
+  if(captiveportalactive)
+  {
+    pmCommonLib.WebServer.RegisterOn("/", f1);
+    pmCommonLib.WebServer.RegisterOn("/", f2, HTTP_POST);
+  }
+  else
+  {
+    pmCommonLib.ConfigHandler.RegisterConfigPage("wifi", f1, f2);
+  }
 }
 
 bool WIFIManagerClass::Connect()

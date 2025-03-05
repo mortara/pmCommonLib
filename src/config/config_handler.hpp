@@ -8,11 +8,13 @@
 #define CONFIGHANDLER_H
 
 
+typedef std::function<String(AsyncWebServerRequest *request)> ConfigHTTPRegisterFunction;
+
 struct ConfigPageDefinition
 {
     String Name;
-    std::function<String(AsyncWebServerRequest *request)> GETMethod;
-    std::function<String(AsyncWebServerRequest *request)> POSTMethod;
+    ConfigHTTPRegisterFunction GETMethod;
+    ConfigHTTPRegisterFunction POSTMethod;
 };
 
 
@@ -33,7 +35,7 @@ class pmConfigHandler
         bool SaveConfigFile(const char * name, JsonDocument data);
         JsonDocument LoadConfigFile(const char * name);
 
-        void RegisterConfigPage(String name, std::function<String(AsyncWebServerRequest *request)> onGetRequest, std::function<String(AsyncWebServerRequest *request)> onPostRequest);
+        void RegisterConfigPage(String name, ConfigHTTPRegisterFunction onGetRequest, ConfigHTTPRegisterFunction onPostRequest);
 
         std::list<ConfigPageDefinition> ConfigPages;
 };

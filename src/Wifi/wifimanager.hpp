@@ -35,6 +35,7 @@ class WIFIManagerClass
         AsyncWebServer *_WebServer;    
 
         bool connecting = false;
+        bool captiveportalactive = false;
         bool connected = false;
         unsigned long interval = 10000;
         unsigned long _lastConnectionTry = 0;
@@ -49,7 +50,7 @@ class WIFIManagerClass
 
     public:
         void Setup(String hostname);
-
+        void Begin();
         bool Connect();
  
         void Disconnect();
@@ -57,6 +58,9 @@ class WIFIManagerClass
         void DisplayInfo();
         bool IsConnected();
         unsigned long LastConnectionTry();
+
+        String handlePOSTrequest(AsyncWebServerRequest *request);
+        String handleWifManagerRoot(AsyncWebServerRequest *request);
 };
 
 #endif

@@ -1,7 +1,7 @@
 #include "mqtt.hpp"
 #include "../pmCommonLib.hpp"
 
-String mqtt_config_page(AsyncWebServerRequest *request) {
+String MQTTConnectorClass::mqtt_config_page(AsyncWebServerRequest *request) {
     Serial.println("Webserver handle request ... ");
   
     
@@ -27,8 +27,8 @@ String mqtt_config_page(AsyncWebServerRequest *request) {
   
     return html;
   }
-  
-  String mqtt_config_page_POST(AsyncWebServerRequest *request)
+
+  String MQTTConnectorClass::mqtt_config_page_POST(AsyncWebServerRequest *request)
   {
       Serial.println("Handling POST request ...");
   
@@ -93,14 +93,14 @@ String mqtt_config_page(AsyncWebServerRequest *request) {
       data["DeviceName"] = _mqttcredentials.DeviceName;
       data["ManuFacturer"] = _mqttcredentials.ManuFacturer;
       data["Model"] = _mqttcredentials.Model;
+      data["AllowChanges"] = true;
       pmCommonLib.ConfigHandler.SaveConfigFile(MQTTconfigFilePath, data);
   
       
       return mqtt_config_page(request);
   }
 
-
-void default_callback(char* topic, byte* payload, unsigned int length) {
+void MQTTConnectorClass::default_callback(char* topic, uint8_t* payload, unsigned int length) {
     
     String msg;
     for (byte i = 0; i < length; i++) {
@@ -137,6 +137,7 @@ void MQTTConnectorClass::Setup(std::function<void(char*, uint8_t*, unsigned int)
         _mqttcredentials.DeviceName = WiFi.getHostname();
         _mqttcredentials.ManuFacturer = "Patrick Mortara";
         _mqttcredentials.Model = "v1";
+        
     }
 
     _mqttcredentials.callback = callback;
@@ -148,11 +149,9 @@ void MQTTConnectorClass::Setup(std::function<void(char*, uint8_t*, unsigned int)
     if(callback != NULL)
         _mqttClient->setCallback(_mqttcredentials.callback);
     else
-        _mqttClient->setCallback(default_callback);
-
-    if(pmCommonLib.WebServer.IsSetup())
     {
-        pmCommonLib.ConfigHandler.RegisterConfigPage("mqtt", mqtt_config_page, mqtt_config_page_POST);
+        MQTTCallBackFunction f1 = std::bind(&MQTTConnectorClass::default_callback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+        _mqttClient->setCallback(f1);
     }
 
     Tasks = new std::list<MQTTMessages *>();
@@ -160,10 +159,33 @@ void MQTTConnectorClass::Setup(std::function<void(char*, uint8_t*, unsigned int)
     _setup = true;
 }
 
+void MQTTConnectorClass::Begin()
+{
+    if(pmCommonLib.WebServer.IsSetup())
+    {
+        ConfigHTTPRegisterFunction f1 = std::bind(&MQTTConnectorClass::mqtt_config_page, this, std::placeholders::_1);
+        ConfigHTTPRegisterFunction f2 = std::bind(&MQTTConnectorClass::mqtt_config_page_POST, this, std::placeholders::_1);
+        pmCommonLib.ConfigHandler.RegisterConfigPage("mqtt", f1, f2);
+    }
+}
 
 bool MQTTConnectorClass::IsSetup()
 {
     return _setup;
+}
+
+void MQTTConnectorClass::Configure(String broker, int port, String user, String password, String devicename, String manufacturer, String model, bool allowchanges)
+{
+    JsonDocument data;
+    data["Broker"] = broker;
+    data["Port"] = port;
+    data["User"] = user;
+    data["Pass"] = password;
+    data["DeviceName"] = devicename;
+    data["ManuFacturer"] = manufacturer;
+    data["Model"] = model;
+    data["AllowChanges"] = allowchanges;
+    pmCommonLib.ConfigHandler.SaveConfigFile(MQTTconfigFilePath, data);
 }
 
 bool MQTTConnectorClass::isActive()

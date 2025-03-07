@@ -174,18 +174,41 @@ bool MQTTConnectorClass::IsSetup()
     return _setup;
 }
 
-void MQTTConnectorClass::Configure(String broker, int port, String user, String password, String devicename, String manufacturer, String model, bool allowchanges)
+void MQTTConnectorClass::saveConfig()
 {
     JsonDocument data;
-    data["Broker"] = broker;
-    data["Port"] = port;
-    data["User"] = user;
-    data["Pass"] = password;
-    data["DeviceName"] = devicename;
-    data["ManuFacturer"] = manufacturer;
-    data["Model"] = model;
-    data["AllowChanges"] = allowchanges;
+    data["Broker"] = _mqttcredentials.Broker;
+    data["Port"] = _mqttcredentials.Port;
+    data["User"] = _mqttcredentials.User;
+    data["Pass"] = _mqttcredentials.Pass;
+    data["DeviceName"] = _mqttcredentials.DeviceName;
+    data["ManuFacturer"] = _mqttcredentials.ManuFacturer;
+    data["Model"] = _mqttcredentials.Model;
+    data["AllowChanges"] = _mqttcredentials.AllowChanges;
     pmCommonLib.ConfigHandler.SaveConfigFile(MQTTconfigFilePath, data);
+}
+
+void MQTTConnectorClass::ConfigureDevice(String devicename, String manufacturer, String model)
+{
+    _mqttcredentials.DeviceName = devicename;
+    _mqttcredentials.ManuFacturer = manufacturer;
+    _mqttcredentials.Model = model;
+
+    saveConfig();
+}
+
+void MQTTConnectorClass::Configure(String broker, int port, String user, String password, String devicename, String manufacturer, String model, bool allowchanges)
+{
+    _mqttcredentials.Broker = broker;
+    _mqttcredentials.Port = String(port);
+    _mqttcredentials.User = user;
+    _mqttcredentials.Pass = password;
+    _mqttcredentials.DeviceName = devicename;
+    _mqttcredentials.ManuFacturer = manufacturer;
+    _mqttcredentials.Model = model;
+    _mqttcredentials.AllowChanges = allowchanges;
+
+    saveConfig();
 }
 
 bool MQTTConnectorClass::isActive()
@@ -571,6 +594,3 @@ void MQTTConnectorClass::PublishMessage(JsonDocument root, String component, boo
    
     _mqttClient->loop();
 }
-
-
-MQTTCreds _mqttcredentials;

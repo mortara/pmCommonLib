@@ -4,6 +4,8 @@
 #include "settings/settings.hpp"
 #include "OTA/ota_handler.hpp"
 #include "WiFi/wifimanager.hpp"
+#include "I2C/i2cdevice.hpp"
+#include "I2C/i2cscanner.hpp"
 
 #ifndef PMCOMMONNOMQTT
 #include "MQTT/mqtt.hpp"

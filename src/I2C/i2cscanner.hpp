@@ -12,6 +12,9 @@
 //     URL: http://forum.arduino.cc/index.php?topic=197360
 //
 
+#ifndef I2CSCANNER_H
+#define I2CSCANNER_H
+
 class I2CScanner
 {
     private:
@@ -76,3 +79,5 @@ class I2CScanner
         void setup();
         void loop();
 };
+
+#endif

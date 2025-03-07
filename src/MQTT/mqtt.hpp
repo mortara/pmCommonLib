@@ -45,10 +45,6 @@ typedef struct {
     MQTTCallBackFunction callback;
 } MQTTCreds;
 
-extern MQTTCreds _mqttcredentials;
-
-
-
 #define MQTTconfigFilePath "/mqtt_config.txt"
 
 class MQTTConnectorClass
@@ -56,6 +52,9 @@ class MQTTConnectorClass
     private:
         WiFiClient *_wifiClientmqtt = nullptr;
         PubSubClient *_mqttClient = nullptr;
+
+        MQTTCreds _mqttcredentials;
+
         bool _active = false;
         bool _reconnectneeded = false;
         
@@ -64,11 +63,12 @@ class MQTTConnectorClass
         
         bool _setup = false;
 
-        
+        void saveConfig();
 
     public:
         void Setup(MQTTCallBackFunction callback = NULL);
         void Begin();
+        void ConfigureDevice(String devicename, String manufacturer, String model);
         void Configure(String broker, int port, String user, String password, String devicename, String manufacturer, String model, bool allowchanges = true);
         void Loop();
         void PublishMessage(JsonDocument msg, String component, bool retain = false, String topic = "", MQTTClassType type = SENSOR);

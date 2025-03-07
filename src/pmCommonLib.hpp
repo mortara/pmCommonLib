@@ -1,10 +1,18 @@
 #include <Arduino.h>
+#include "logging/logging.hpp"
 #include "config/config_handler.hpp"
 #include "settings/settings.hpp"
 #include "OTA/ota_handler.hpp"
 #include "WiFi/wifimanager.hpp"
+
+#ifndef PMCOMMONNOMQTT
 #include "MQTT/mqtt.hpp"
+#endif
+
+#ifndef PMCOMMONNOWEBSERIAL
 #include "Webserial/webserial.hpp"
+#endif
+
 #include "Webserver/webserver.hpp"
 
 #ifndef PMCOMMONLIB_H
@@ -17,8 +25,15 @@ class pmCommonLibClass
     public:
         pmConfigHandler ConfigHandler;
         pmSettingsClass Settings;
+
+        #ifndef PMCOMMONNOMQTT
         MQTTConnectorClass MQTTConnector;
+        #endif
+
+        #ifndef PMCOMMONNOWEBSERIAL
         WebSerialLoggerClass WebSerial;
+        #endif
+
         WebServerClass WebServer;
         WIFIManagerClass WiFiManager;
         OTAHandlerClass OTAHandler;

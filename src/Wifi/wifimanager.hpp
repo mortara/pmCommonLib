@@ -44,8 +44,11 @@ class WIFIManagerClass
         // Timer variables
         unsigned long previousMillis = 0;
       
+        #ifndef PMCOMMONNOMQTT
         void setupMQTT();
         bool mqttsetup = false;
+        #endif
+        
         bool initWiFi();
 
     public:

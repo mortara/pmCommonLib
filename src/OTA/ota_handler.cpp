@@ -18,7 +18,7 @@ void OTAHandlerClass::Start()
     ArduinoOTA.onError([this](ota_error_t error) { this->onError(error); });
     ArduinoOTA.begin();
 
-    pmCommonLib.WebSerial.println("OTA started");
+    pmLogging.LogLn("OTA started");
     ota_running = true;
     ota_timer = millis();
 }
@@ -39,14 +39,14 @@ void OTAHandlerClass::onStart()
     }
 
     // NOTE: if updating FS this would be the place to unmount FS using FS.end()
-    pmCommonLib.WebSerial.println("Start updating " + type);
+    pmLogging.LogLn("Start updating " + type);
     OTAOnly = true;
 }
 
 void OTAHandlerClass::onEnd()
 {
-    pmCommonLib.WebSerial.println("Done!");
-    pmCommonLib.WebSerial.println("Rebooting");
+    pmLogging.LogLn("Done!");
+    pmLogging.LogLn("Rebooting");
 
     delay(1000);
 }
@@ -58,7 +58,7 @@ void OTAHandlerClass::onProgress(unsigned int progress, unsigned int total)
     if(perc != last_perc)
     {
         String str = "Progress: " + String(perc) + "\r";
-        pmCommonLib.WebSerial.println(str.c_str());
+        pmLogging.LogLn(str.c_str());
         last_perc = perc;
     }
 }
@@ -68,15 +68,15 @@ void OTAHandlerClass::onError(ota_error_t error)
     Serial.printf("Error[%u]: ", error);
 
     if (error == OTA_AUTH_ERROR) {
-        pmCommonLib.WebSerial.println("Auth Failed");
+        pmLogging.LogLn("Auth Failed");
     } else if (error == OTA_BEGIN_ERROR) {
-        pmCommonLib.WebSerial.println("Begin Failed");
+        pmLogging.LogLn("Begin Failed");
     } else if (error == OTA_CONNECT_ERROR) {
-        pmCommonLib.WebSerial.println("Connect Failed");
+        pmLogging.LogLn("Connect Failed");
     } else if (error == OTA_RECEIVE_ERROR) {
-        pmCommonLib.WebSerial.println("Receive Failed");
+        pmLogging.LogLn("Receive Failed");
     } else if (error == OTA_END_ERROR) {
-        pmCommonLib.WebSerial.println("End Failed");
+        pmLogging.LogLn("End Failed");
     }
 }
 

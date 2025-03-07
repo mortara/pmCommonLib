@@ -15,15 +15,19 @@ void pmCommonLibClass::Setup(bool mqtt, bool webserial, bool ota, bool general)
 
     WiFiManager.Setup("");
 
+    #ifndef PMCOMMONNOWEBSERIAL
     if(webserial)
     {
         WebSerial.Setup();
     }
+    #endif
 
+    #ifndef PMCOMMONNOMQTT
     if(mqtt)
     {
         MQTTConnector.Setup(NULL);
     }
+    #endif
 
     if(ota)
     {
@@ -40,13 +44,17 @@ void pmCommonLibClass::Start()
 
     WiFiManager.Begin();
 
+    #ifndef PMCOMMONNOMQTT
     if(MQTTConnector.IsSetup())
         MQTTConnector.Begin();
+    #endif
 
     ConfigHandler.Begin();
-
+    
+    #ifndef PMCOMMONNOWEBSERIAL
     if(WebSerial.IsSetup())
         WebSerial.Begin(WebServer.GetServer());
+    #endif
 }
 
 void pmCommonLibClass::Loop()
@@ -60,12 +68,15 @@ void pmCommonLibClass::Loop()
     if(OTAHandler.IsSetup())
         OTAHandler.Loop();
     
+    #ifndef PMCOMMONNOWEBSERIAL
     if(WebSerial.IsSetup())
         WebSerial.Loop();
+    #endif
 
+    #ifndef PMCOMMONNOMQTT
     if(MQTTConnector.IsSetup())
         MQTTConnector.Loop();
-    
+    #endif
 
     WiFiManager.Loop();
     

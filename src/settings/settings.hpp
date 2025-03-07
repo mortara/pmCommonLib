@@ -8,10 +8,19 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
+#define settingsconfigFilePath "/settings_config.txt"
+
+enum pmSettingTypes {
+    TEXTSETTING,
+    NUMERICSETTING
+  };
+
 struct pmSettingsStruct
 {
     String Name; 
     String Value; 
+    String Label;
+    pmSettingTypes Type = pmSettingTypes::TEXTSETTING;
 };
 
 class pmSettingsClass
@@ -25,7 +34,7 @@ class pmSettingsClass
         void Setup();
         void Begin();
         bool IsSetup();
-        void RegisterSetting(String name);
+        void RegisterSetting(String name, String defaultvalue = "", String label = "", pmSettingTypes type = pmSettingTypes::TEXTSETTING);
 
         String GetSettingValue(String name);
 

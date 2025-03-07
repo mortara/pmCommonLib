@@ -23,12 +23,14 @@ String WIFIManagerClass::handleWifManagerRoot(AsyncWebServerRequest *request) {
                         <option value='dhcp' " + o1 + ">DHCP</option>\
                         <option value='static' " + o2 + ">Static</option>\
                       </select><br>\
-                      <label for='ip'>IP Address</label>\
+                      <label for='ip'>IP address</label>\
                       <input type='text' id ='ip' name='ip' value='" + _wificredentials.IP + "'><br>\
                       <label for='subnet'>Subnet</label>\
                       <input type='text' id ='subnet' name='subnet' value='" + _wificredentials.Subnet + "'><br>\
-                      <label for='gateway'>Gateway Address</label>\
+                      <label for='gateway'>Gateway</label>\
                       <input type='text' id ='gateway' name='gateway' value='" + _wificredentials.Gateway + "'><br>\
+                      <label for='dns'>DNS server</label>\
+                      <input type='text' id ='dns' name='dns' value='" + _wificredentials.DNS + "'><br>\
                       <input type ='submit' value ='Submit'>\
                     </p>\
                   </form>";
@@ -82,6 +84,13 @@ String WIFIManagerClass::handlePOSTrequest(AsyncWebServerRequest *request)
             Serial.print("Subnet set to: ");
             Serial.println(_wificredentials.Subnet);        
           }
+
+          // HTTP POST dns value
+          if (p->name() == "dns") {
+            _wificredentials.DNS = p->value();
+              Serial.print("DNS server set to: ");
+              Serial.println(_wificredentials.DNS);
+          }
         //Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
         }
     }
@@ -116,7 +125,9 @@ bool WIFIManagerClass::initWiFi() {
         IPAddress localIP;
         IPAddress localGateway;
         IPAddress subnet;
+        IPAddress dns;
 
+        dns.fromString(_wificredentials.DNS.c_str());
         localIP.fromString(_wificredentials.IP.c_str());
         localGateway.fromString(_wificredentials.Gateway.c_str());
 
@@ -129,6 +140,8 @@ bool WIFIManagerClass::initWiFi() {
           Serial.println("STA Failed to configure with static IP");
           return false;
         }
+
+        WiFi.setDNS(dns);
     }
     else
     {
@@ -154,6 +167,7 @@ bool WIFIManagerClass::initWiFi() {
       _wificredentials.IP = WiFi.localIP().toString();
       _wificredentials.Subnet = WiFi.subnetMask().toString();
       _wificredentials.Gateway = WiFi.gatewayIP().toString();
+      _wificredentials.DNS = WiFi.dnsIP().toString();
     }
 
     Serial.println(WiFi.localIP());
@@ -177,6 +191,7 @@ void WIFIManagerClass::Setup(String hostname)
         _wificredentials.IP = String(doc["IP"].as<String>());
         _wificredentials.Gateway = String(doc["Gateway"].as<String>());
         _wificredentials.Subnet = String(doc["Subnet"].as<String>());
+        _wificredentials.DNS = String(doc["dns"].as<String>());
 
         Serial.println("SSID: " + _wificredentials.SSID);
         Serial.println("PASS: " + _wificredentials.PASS);
@@ -220,16 +235,17 @@ bool WIFIManagerClass::Connect()
     return true;
 }
 
+#ifndef PMCOMMONNOMQTT
 void WIFIManagerClass::setupMQTT()
 {
     if(mqttsetup)
         return;
 
-    pmCommonLib.WebSerial.println("Setting up Wifi MQTT client");
+    pmLogging.LogLn("Setting up Wifi MQTT client");
     
     if(!pmCommonLib.MQTTConnector.SetupSensor("SSID", "WIFI", "", "", ""))
     {
-        pmCommonLib.WebSerial.println("Unable to setup WIFI MQTT client");            
+        pmLogging.LogLn("Unable to setup WIFI MQTT client");            
         return;
     }
 
@@ -241,14 +257,15 @@ void WIFIManagerClass::setupMQTT()
     pmCommonLib.MQTTConnector.SetupSensor("Gateway","WIFI", "", "", "");
     pmCommonLib.MQTTConnector.SetupSensor("DNS", "WIFI", "", "", "");
 
-    pmCommonLib.WebSerial.println("WIfi mqtt setup done!");
+    pmLogging.LogLn("WIfi mqtt setup done!");
 
     mqttsetup = true;
 }
+#endif
 
 void WIFIManagerClass::Disconnect()
 {
-    pmCommonLib.WebSerial.println("disonnecting from WiFi ..");
+    pmLogging.LogLn("disonnecting from WiFi ..");
     
     connecting = false;
     connected = false;
@@ -258,28 +275,28 @@ void WIFIManagerClass::DisplayInfo(){
      
   if(WiFi.getMode() == WIFI_AP)
   {
-    pmCommonLib.WebSerial.println("[*] SoftAp is running ");
-    pmCommonLib.WebSerial.print("[+] ESP32 Hostname : ");
-    pmCommonLib.WebSerial.println(WiFi.getHostname());
-    pmCommonLib.WebSerial.print("[+] ESP32 IP : ");
-    pmCommonLib.WebSerial.println(WiFi.softAPIP().toString());
+    pmLogging.LogLn("[*] SoftAp is running ");
+    pmLogging.Log("[+] ESP32 Hostname : ");
+    pmLogging.LogLn(WiFi.getHostname());
+    pmLogging.Log("[+] ESP32 IP : ");
+    pmLogging.LogLn(WiFi.softAPIP().toString());
   }
   else
   {
   
-    pmCommonLib.WebSerial.print("[*] Network information for ");
-    pmCommonLib.WebSerial.println(WiFi.SSID());
+    pmLogging.Log("[*] Network information for ");
+    pmLogging.LogLn(WiFi.SSID());
 
-    pmCommonLib.WebSerial.println("[+] BSSID : " + WiFi.BSSIDstr());
-    pmCommonLib.WebSerial.print("[+] Gateway IP : ");
-    pmCommonLib.WebSerial.println(WiFi.gatewayIP().toString());
-    pmCommonLib.WebSerial.print("[+] DNS IP : ");
-    pmCommonLib.WebSerial.println(WiFi.dnsIP().toString());   
-    pmCommonLib.WebSerial.println((String)"[+] RSSI : " + String(WiFi.RSSI()) + " dB");
-    pmCommonLib.WebSerial.print("[+] ESP32 IP : ");
-    pmCommonLib.WebSerial.println(WiFi.localIP().toString());
-    pmCommonLib.WebSerial.print("[+] Subnet Mask : ");
-    pmCommonLib.WebSerial.println(WiFi.subnetMask().toString());
+    pmLogging.LogLn("[+] BSSID : " + WiFi.BSSIDstr());
+    pmLogging.Log("[+] Gateway IP : ");
+    pmLogging.LogLn(WiFi.gatewayIP().toString());
+    pmLogging.Log("[+] DNS IP : ");
+    pmLogging.LogLn(WiFi.dnsIP().toString());   
+    pmLogging.LogLn((String)"[+] RSSI : " + String(WiFi.RSSI()) + " dB");
+    pmLogging.Log("[+] ESP32 IP : ");
+    pmLogging.LogLn(WiFi.localIP().toString());
+    pmLogging.Log("[+] Subnet Mask : ");
+    pmLogging.LogLn(WiFi.subnetMask().toString());
   } 
 }
 
@@ -301,11 +318,12 @@ void WIFIManagerClass::Loop()
 
     if(connecting && connected)
     {
-        pmCommonLib.WebSerial.println("WiFi connected!");
+        pmLogging.LogLn("WiFi connected!");
         connecting = false;
         DisplayInfo();
     }
 
+    #ifndef PMCOMMONNOMQTT
     if(currentMillis - _lastMqttupdate > 30000 && connected && pmCommonLib.MQTTConnector.isActive())
     {
         if(!mqttsetup)
@@ -328,6 +346,7 @@ void WIFIManagerClass::Loop()
             _lastMqttupdate = currentMillis;
         }
     }
+    #endif
 
     // if WiFi is down, try reconnecting
     /*if (!connecting && !connected && (currentMillis - _lastConnectionTry >= interval)) 

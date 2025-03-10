@@ -53,14 +53,12 @@ bool WebSerialLoggerClass::IsRunning()
 
 void WebSerialLoggerClass::print(const char *text)
 {
-
     if(running)
         webSerial.print(text);
 }
 
 void WebSerialLoggerClass::print(String text)
 {
-
     if(running)
         webSerial.print(text);
 }

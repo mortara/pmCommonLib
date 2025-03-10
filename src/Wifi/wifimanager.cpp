@@ -18,6 +18,8 @@ String WIFIManagerClass::handleWifManagerRoot(AsyncWebServerRequest *request) {
                       <input type='text' id ='ssid' name='ssid' value='" + _wificredentials.SSID + "'><br>\
                       <label for='pass'>Password</label>\
                       <input type='text' id ='pass' name='pass' value='" + _wificredentials.PASS + "'><br>\
+                      <label for='pass'>Hostname</label>\
+                      <input type='text' id ='hostname' name='hostname' value='" + _wificredentials.Hostname + "'><br>\
                       <label for='ipmode'>Network configuration</label>\
                       <select id='ipmode' name='ipmode'>\
                         <option value='dhcp' " + o1 + ">DHCP</option>\
@@ -91,6 +93,12 @@ String WIFIManagerClass::handlePOSTrequest(AsyncWebServerRequest *request)
               Serial.print("DNS server set to: ");
               Serial.println(_wificredentials.DNS);
           }
+
+          if (p->name() == "hostname") {
+            _wificredentials.Hostname = p->value();
+              Serial.print("Host name set to: ");
+              Serial.println(_wificredentials.Hostname);
+          }
         //Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
         }
     }
@@ -102,7 +110,7 @@ String WIFIManagerClass::handlePOSTrequest(AsyncWebServerRequest *request)
     data["Subnet"] = _wificredentials.Subnet;
     data["Gateway"] = _wificredentials.Gateway;
     data["ConfigMode"] = _wificredentials.ConfigMode;
-    
+    data["Hostname"] = _wificredentials.Hostname;
     pmCommonLib.ConfigHandler.SaveConfigFile(WIFIconfigFilePath, data);
 
     request->send(200, "text/plain", "Done. ESP will restart, connect to your router and go to IP address: " + _wificredentials.IP);
@@ -130,6 +138,9 @@ bool WIFIManagerClass::initWiFi() {
         dns.fromString(_wificredentials.DNS.c_str());
         localIP.fromString(_wificredentials.IP.c_str());
         localGateway.fromString(_wificredentials.Gateway.c_str());
+        
+        if(_wificredentials.Hostname != "")
+          WiFi.setHostname(_wificredentials.Hostname.c_str());
 
         if(_wificredentials.Subnet != "")
           subnet.fromString(_wificredentials.Subnet.c_str());
@@ -176,12 +187,14 @@ bool WIFIManagerClass::initWiFi() {
 
 
 
-void WIFIManagerClass::Setup(String hostname)
+void WIFIManagerClass::Setup()
 {
     Serial.println("Setting up WIFI manager");
 
     JsonDocument doc = pmCommonLib.ConfigHandler.LoadConfigFile(WIFIconfigFilePath);
     
+
+
     if(doc["SSID"].is<String>())
     {
         Serial.println("Reading config-file!");
@@ -192,17 +205,23 @@ void WIFIManagerClass::Setup(String hostname)
         _wificredentials.Gateway = String(doc["Gateway"].as<String>());
         _wificredentials.Subnet = String(doc["Subnet"].as<String>());
         _wificredentials.DNS = String(doc["dns"].as<String>());
+        _wificredentials.Hostname = String(doc["Hostname"].as<String>());
 
         Serial.println("SSID: " + _wificredentials.SSID);
         Serial.println("PASS: " + _wificredentials.PASS);
     }
+
+    if(_wificredentials.Hostname != "")
+      WiFi.setHostname(_wificredentials.Hostname.c_str());
+    else
+      _wificredentials.Hostname = WiFi.getHostname();
 
     if(!initWiFi())  
     {
         // Connect to Wi-Fi network with SSID and password
         Serial.println("Setting AP (Access Point)");
        
-        WiFi.softAP("ESP-WIFI-MANAGER", NULL, 7);
+        WiFi.softAP("ESP-WIFI-MANAGER-" + _wificredentials.Hostname, "", 7);
 
         IPAddress IP = WiFi.softAPIP();
         Serial.print("AP IP address: ");
@@ -220,9 +239,10 @@ void WIFIManagerClass::Begin()
 
   if(captiveportalactive)
   {
+    pmCommonLib.WebServer.Reset();
     pmCommonLib.WebServer.RegisterOn("/", f1);
     pmCommonLib.WebServer.RegisterOn("/", f2, HTTP_POST);
-    pmCommonLib.WebServer.StopRegistrations();
+    pmCommonLib.ConfigHandler.RegisterConfigPage("wifi", f1, f2);
   }
   else
   {

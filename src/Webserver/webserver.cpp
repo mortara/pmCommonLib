@@ -28,23 +28,24 @@ bool WebServerClass::IsSetup()
     return _setup;
 }
 
-void WebServerClass::StopRegistrations()
+void WebServerClass::Reset()
 {
-    nomoreregistrations = true;
+    _webserver->reset();
 }
 
 void WebServerClass::RegisterOn(const char *path, ArRequestHandlerFunction onRequest, WebRequestMethod method)
 {
-    if(!IsSetup() || nomoreregistrations)
+    if(!IsSetup())
         return;
 
     Serial.println("Registering on-handler: " + String(method) + " " + String(path));
+
     _webserver->on(path, method, onRequest);
 }
 
 void WebServerClass::RegisterNotFound(ArRequestHandlerFunction onRequest)
 {
-    if(!IsSetup() || nomoreregistrations)
+    if(!IsSetup())
         return;
 
     Serial.println("Registering notfound-handler");

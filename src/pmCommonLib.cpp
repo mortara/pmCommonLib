@@ -13,7 +13,7 @@ void pmCommonLibClass::Setup(bool mqtt, bool webserial, bool ota, bool general)
 
     WebServer.Setup();
 
-    WiFiManager.Setup("");
+    WiFiManager.Setup();
 
     #ifndef PMCOMMONNOWEBSERIAL
     if(webserial)

@@ -22,6 +22,7 @@ typedef struct {
     String Gateway;
     String DNS; 
     String ConfigMode = "dhcp";
+    String Hostname = "";
 } WIFICreds;
 
 extern WIFICreds _wificredentials;
@@ -52,7 +53,7 @@ class WIFIManagerClass
         bool initWiFi();
 
     public:
-        void Setup(String hostname);
+        void Setup();
         void Begin();
         bool Connect();
  

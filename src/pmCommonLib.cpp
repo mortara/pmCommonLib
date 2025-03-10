@@ -3,6 +3,7 @@
 
 void pmCommonLibClass::Setup(bool mqtt, bool webserial, bool ota, bool general)
 {
+    pmLogging.LogLn("pmCommonLib Setup");
 
     ConfigHandler.Setup();
 
@@ -37,11 +38,14 @@ void pmCommonLibClass::Setup(bool mqtt, bool webserial, bool ota, bool general)
 
 void pmCommonLibClass::Start()
 {
-    WebServer.Begin();
+    pmLogging.LogLn("pmCommonLib Start");
 
+    WebServer.Begin();
+ 
     if(Settings.IsSetup())
         Settings.Begin();
 
+    ConfigHandler.Begin();
     WiFiManager.Begin();
 
     #ifndef PMCOMMONNOMQTT
@@ -49,7 +53,7 @@ void pmCommonLibClass::Start()
         MQTTConnector.Begin();
     #endif
 
-    ConfigHandler.Begin();
+    
     
     #ifndef PMCOMMONNOWEBSERIAL
     if(WebSerial.IsSetup())

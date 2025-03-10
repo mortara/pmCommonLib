@@ -1,8 +1,14 @@
 #include "wifimanager.hpp"
 #include "../pmCommonLib.hpp"
 
+String WIFIManagerClass::captivePortalRedirector(AsyncWebServerRequest *request)
+{
+    request->redirect("/config/wifi.html");
+    return "";
+}
+
 String WIFIManagerClass::handleWifManagerRoot(AsyncWebServerRequest *request) {
-    Serial.println("Webserver handle wifi request ... ");
+    pmLogging.LogLn("Webserver handle wifi request ... ");
 
     String o1 = "";
     String o2 = "";
@@ -12,7 +18,7 @@ String WIFIManagerClass::handleWifManagerRoot(AsyncWebServerRequest *request) {
     else
       o1 = "selected";
 
-    String html = "<form action='/config/mqtt.html' method='POST'>\
+    String html = "<form action='/config/wifi.html' method='POST'>\
                     <p>\
                       <label for='ssid'>SSID</label>\
                       <input type='text' id ='ssid' name='ssid' value='" + _wificredentials.SSID + "'><br>\
@@ -42,7 +48,7 @@ String WIFIManagerClass::handleWifManagerRoot(AsyncWebServerRequest *request) {
 
 String WIFIManagerClass::handlePOSTrequest(AsyncWebServerRequest *request)
 {
-    Serial.println("Handling POST request ...");
+   pmLogging.LogLn("Handling POST request ...");
 
     int params = request->params();
     for(int i=0;i<params;i++)
@@ -103,30 +109,19 @@ String WIFIManagerClass::handlePOSTrequest(AsyncWebServerRequest *request)
         }
     }
 
-    JsonDocument data;
-    data["SSID"] = _wificredentials.SSID;
-    data["PASS"] = _wificredentials.PASS;
-    data["IP"] = _wificredentials.IP;
-    data["Subnet"] = _wificredentials.Subnet;
-    data["Gateway"] = _wificredentials.Gateway;
-    data["ConfigMode"] = _wificredentials.ConfigMode;
-    data["Hostname"] = _wificredentials.Hostname;
-    pmCommonLib.ConfigHandler.SaveConfigFile(WIFIconfigFilePath, data);
-
-    request->send(200, "text/plain", "Done. ESP will restart, connect to your router and go to IP address: " + _wificredentials.IP);
-    delay(3000);
-    ESP.restart();
-
+    SaveConfig();
+    Disconnect();
+    initWiFi();
+    Connect();
     return "";
 }
 
-bool WIFIManagerClass::initWiFi() {
+bool WIFIManagerClass::initWiFi() 
+{
     if(_wificredentials.SSID == ""){
       pmLogging.LogLn("Undefined SSID");
       return false;
     }
-
-    WiFi.mode(WIFI_STA);
 
     if(_wificredentials.ConfigMode == "static")
     {
@@ -139,9 +134,6 @@ bool WIFIManagerClass::initWiFi() {
         localIP.fromString(_wificredentials.IP.c_str());
         localGateway.fromString(_wificredentials.Gateway.c_str());
 
-        if(_wificredentials.Hostname != "")
-          WiFi.setHostname(_wificredentials.Hostname.c_str());
-
         if(_wificredentials.Subnet != "")
           subnet.fromString(_wificredentials.Subnet.c_str());
         else
@@ -152,106 +144,103 @@ bool WIFIManagerClass::initWiFi() {
           pmLogging.LogLn("STA Failed to configure with static IP");
           return false;
         }
-       
     }
     else
     {
       pmLogging.LogLn("DHCP enabled");
     }
 
-    WiFi.begin(_wificredentials.SSID.c_str(), _wificredentials.PASS.c_str());
-    pmLogging.LogLn("Connecting to WiFi...");
-
-    unsigned long currentMillis = millis();
-    previousMillis = currentMillis;
-
-    while(WiFi.status() != WL_CONNECTED) {
-      currentMillis = millis();
-      if (currentMillis - previousMillis >= interval) {
-        pmLogging.LogLn("Failed to connect.");
-        return false;
-      }
-    }
-
-    if(_wificredentials.ConfigMode == "dhcp")
-    {
-      _wificredentials.IP = WiFi.localIP().toString();
-      _wificredentials.Subnet = WiFi.subnetMask().toString();
-      _wificredentials.Gateway = WiFi.gatewayIP().toString();
-      _wificredentials.DNS = WiFi.dnsIP().toString();
-    }
-
-    pmLogging.LogLn(WiFi.localIP().toString());
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(_wificredentials.SSID.c_str(), _wificredentials.PASS.c_str(), 0, __null, false);
+    
     return true;
 }
 
-
-
-void WIFIManagerClass::Setup()
+void WIFIManagerClass::Setup(bool autoconnect)
 {
   pmLogging.LogLn("Setting up WIFI manager");
-
-    JsonDocument doc = pmCommonLib.ConfigHandler.LoadConfigFile(WIFIconfigFilePath);
+  LoadConfig();
     
+  initWiFi();  
 
+  if(autoconnect)
+    Connect();
+  
+  if(_wificredentials.Hostname != "")
+    WiFi.setHostname(_wificredentials.Hostname.c_str());
+  else
+    _wificredentials.Hostname = WiFi.getHostname();
 
-    if(doc["SSID"].is<String>())
-    {
-        pmLogging.LogLn("Reading config-file!");
-        _wificredentials.ConfigMode = String(doc["ConfigMode"].as<String>());
-        _wificredentials.SSID = String(doc["SSID"].as<String>());
-        _wificredentials.PASS = String(doc["PASS"].as<String>());
-        _wificredentials.IP = String(doc["IP"].as<String>());
-        _wificredentials.Gateway = String(doc["Gateway"].as<String>());
-        _wificredentials.Subnet = String(doc["Subnet"].as<String>());
-        _wificredentials.DNS = String(doc["dns"].as<String>());
-        _wificredentials.Hostname = String(doc["Hostname"].as<String>());
+  ConfigHTTPRegisterFunction f1 = std::bind(&WIFIManagerClass::handleWifManagerRoot, this, std::placeholders::_1);
+  ConfigHTTPRegisterFunction f2 = std::bind(&WIFIManagerClass::handlePOSTrequest, this, std::placeholders::_1);
 
-        pmLogging.LogLn("SSID: " + _wificredentials.SSID);
-        pmLogging.LogLn("PASS: " + _wificredentials.PASS);
-    }
-
-    if(_wificredentials.Hostname != "")
-      WiFi.setHostname(_wificredentials.Hostname.c_str());
-    else
-      _wificredentials.Hostname = WiFi.getHostname();
-
-    if(!initWiFi())  
-    {
-        // Connect to Wi-Fi network with SSID and password
-        pmLogging.LogLn("Setting AP (Access Point)");
-       
-        WiFi.softAP("ESP-WIFI-MANAGER-" + _wificredentials.Hostname, "", 7);
-
-        IPAddress IP = WiFi.softAPIP();
-        pmLogging.LogLn("AP IP address: " + IP.toString());
-
-        ConfigHTTPRegisterFunction f1 = std::bind(&WIFIManagerClass::handleWifManagerRoot, this, std::placeholders::_1);
-        ConfigHTTPRegisterFunction f2 = std::bind(&WIFIManagerClass::handlePOSTrequest, this, std::placeholders::_1);
-        
-        pmCommonLib.WebServer.RegisterOn("/", f1);
-        pmCommonLib.WebServer.RegisterOn("/", f2, HTTP_POST);
-        pmCommonLib.WebServer.StopRegistrations();
-        captiveportalactive = true;
-    }
-    
+  pmCommonLib.ConfigHandler.RegisterConfigPage("wifi", f1, f2);
 }
 
 void WIFIManagerClass::Begin()
 {
-  ConfigHTTPRegisterFunction f1 = std::bind(&WIFIManagerClass::handleWifManagerRoot, this, std::placeholders::_1);
-  ConfigHTTPRegisterFunction f2 = std::bind(&WIFIManagerClass::handlePOSTrequest, this, std::placeholders::_1);
+  Connect();
+}
 
-  if(!captiveportalactive)
+void WIFIManagerClass::LoadConfig()
+{
+  JsonDocument doc = pmCommonLib.ConfigHandler.LoadConfigFile(WIFIconfigFilePath);
+
+  if(doc["SSID"].is<String>())
   {
-    pmCommonLib.ConfigHandler.RegisterConfigPage("wifi", f1, f2);
+      pmLogging.LogLn("Reading config-file!");
+      _wificredentials.ConfigMode = String(doc["ConfigMode"].as<String>());
+      _wificredentials.SSID = String(doc["SSID"].as<String>());
+      _wificredentials.PASS = String(doc["PASS"].as<String>());
+      _wificredentials.IP = String(doc["IP"].as<String>());
+      _wificredentials.Gateway = String(doc["Gateway"].as<String>());
+      _wificredentials.Subnet = String(doc["Subnet"].as<String>());
+      _wificredentials.DNS = String(doc["dns"].as<String>());
+      _wificredentials.Hostname = String(doc["Hostname"].as<String>());
+
+      pmLogging.LogLn("SSID: " + _wificredentials.SSID);
+      pmLogging.LogLn("PASS: " + _wificredentials.PASS);
   }
 }
 
+void WIFIManagerClass::SaveConfig()
+{
+  JsonDocument data;
+  data["SSID"] = _wificredentials.SSID;
+  data["PASS"] = _wificredentials.PASS;
+  data["IP"] = _wificredentials.IP;
+  data["Subnet"] = _wificredentials.Subnet;
+  data["Gateway"] = _wificredentials.Gateway;
+  data["ConfigMode"] = _wificredentials.ConfigMode;
+  data["Hostname"] = _wificredentials.Hostname;
+  data["dns"] = _wificredentials.DNS;
+  pmCommonLib.ConfigHandler.SaveConfigFile(WIFIconfigFilePath, data);
+}
+
+void WIFIManagerClass::StartCaptivePortal()
+{
+  // Connect to Wi-Fi network with SSID and password
+  pmLogging.LogLn("Setting AP (Access Point)");
+       
+  WiFi.softAP("ESP-WIFI-MANAGER-" + _wificredentials.Hostname, "", 7);
+
+  IPAddress IP = WiFi.softAPIP();
+  pmLogging.LogLn("AP IP address: " + IP.toString());
+
+  ConfigHTTPRegisterFunction f1 = std::bind(&WIFIManagerClass::captivePortalRedirector, this, std::placeholders::_1);
+  
+  pmCommonLib.WebServer.RegisterOn("/", f1);
+  //pmCommonLib.WebServer.StopRegistrations();
+  captiveportalactive = true;
+}
+
+
+
 bool WIFIManagerClass::Connect()
 {
-   
-    return true;
+   connecting = true;
+   _lastConnectionTry = millis();
+   return WiFi.reconnect();
 }
 
 #ifndef PMCOMMONNOMQTT
@@ -288,10 +277,12 @@ void WIFIManagerClass::Disconnect()
     
     connecting = false;
     connected = false;
+
+    WiFi.disconnect();
 }
 
 void WIFIManagerClass::DisplayInfo(){
-     
+  pmLogging.LogLn("Dumping WIFI info ");
   if(WiFi.getMode() == WIFI_AP)
   {
     pmLogging.LogLn("[*] SoftAp is running ");
@@ -338,8 +329,27 @@ void WIFIManagerClass::Loop()
     if(connecting && connected)
     {
         pmLogging.LogLn("WiFi connected!");
+        
+        if(_wificredentials.ConfigMode == "dhcp")
+        {
+          pmLogging.LogLn("getting dhcp parameters");
+          _wificredentials.IP = WiFi.localIP().toString();
+          _wificredentials.Subnet = WiFi.subnetMask().toString();
+          _wificredentials.Gateway = WiFi.gatewayIP().toString();
+          _wificredentials.DNS = WiFi.dnsIP().toString();
+        }
+
         connecting = false;
         DisplayInfo();
+    }
+
+    if(connecting && !connected && currentMillis - _lastConnectionTry > 5000)
+    {
+        Disconnect();
+        pmLogging.LogLn("WiFI could not be connected!");
+        pmLogging.LogLn("Starting captive Portal");
+        StartCaptivePortal();
+        
     }
 
     #ifndef PMCOMMONNOMQTT
@@ -351,6 +361,7 @@ void WIFIManagerClass::Loop()
         }
         else
         {
+           pmLogging.LogLn("Sending WIFI status to MQTT ");
             JsonDocument payload;
             payload["SSID"] = WiFi.SSID();
             payload["BSSID"] = WiFi.BSSIDstr();

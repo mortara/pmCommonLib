@@ -53,16 +53,20 @@ class WIFIManagerClass
         bool initWiFi();
 
     public:
-        void Setup();
+        void Setup(bool autoconnect = true);
         void Begin();
         bool Connect();
- 
+        void StartCaptivePortal();
+
         void Disconnect();
         void Loop();
         void DisplayInfo();
         bool IsConnected();
         unsigned long LastConnectionTry();
+        void LoadConfig();
+        void SaveConfig();
 
+        String captivePortalRedirector(AsyncWebServerRequest *request);
         String handlePOSTrequest(AsyncWebServerRequest *request);
         String handleWifManagerRoot(AsyncWebServerRequest *request);
 };

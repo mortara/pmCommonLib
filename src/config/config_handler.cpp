@@ -10,7 +10,7 @@ void handleConfigManagerRoot(AsyncWebServerRequest *request) {
     req.toLowerCase();
 
 
-    Serial.println("Webserver handle request ... " + req);
+    pmLogging.LogLn("Webserver handle request ... " + req);
 
     for (std::list<ConfigPageDefinition>::iterator it = pmCommonLib.ConfigHandler.ConfigPages.begin(); it != pmCommonLib.ConfigHandler.ConfigPages.end(); ++it){
       String page = "/config/" + it->Name + ".html";
@@ -177,7 +177,7 @@ bool pmConfigHandler::Setup()
     if(!initLittleFS())
       return false;
 
-    Serial.println("Config-Manager setup complete!");
+    pmLogging.LogLn("Config-Manager setup complete!");
     _setup = true;
     return true;
 }
@@ -242,7 +242,7 @@ void pmConfigHandler::writeFile(fs::FS &fs, const char * path, const char * mess
     Serial.printf("Writing file: %s\r\n", path);
 
     #if defined(ESP8266)
-    File file = fs.open(path, "r");
+    File file = fs.open(path, "w");
     #elif
     File file = fs.open(path, "w");
     #endif

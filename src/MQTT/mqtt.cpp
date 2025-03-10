@@ -116,7 +116,7 @@ void MQTTConnectorClass::Setup(std::function<void(char*, uint8_t*, unsigned int)
     
     if(doc["Broker"].is<String>())
     {
-        Serial.println("Reading MQTT config-file!");
+        pmLogging.LogLn("Reading MQTT config-file!");
         _mqttcredentials.Broker = String(doc["Broker"].as<String>());
         _mqttcredentials.Port = String(doc["Port"].as<String>());
         _mqttcredentials.User = String(doc["User"].as<String>());
@@ -125,8 +125,8 @@ void MQTTConnectorClass::Setup(std::function<void(char*, uint8_t*, unsigned int)
         _mqttcredentials.ManuFacturer = String(doc["ManuFacturer"].as<String>());
         _mqttcredentials.Model = String(doc["Model"].as<String>());
 
-        Serial.println("Broker: " + _mqttcredentials.Broker);
-        Serial.println("Port: " + _mqttcredentials.Port);
+        pmLogging.LogLn("Broker: " + _mqttcredentials.Broker);
+        pmLogging.LogLn("Port: " + _mqttcredentials.Port);
     }
     else
     {
@@ -225,12 +225,13 @@ void MQTTConnectorClass::Loop()
 
     if(Tasks == nullptr)
     {
-        Serial.println("MQTT Client has not been set up!");
+        pmLogging.LogLn("MQTT Client has not been set up!");
         return;
     }
 
     if(_mqttcredentials.changed)
     {
+        pmLogging.LogLn("MQTT credentials changed. reconnecting ....");
         _mqttClient->setServer(_mqttcredentials.Broker.c_str(), (uint16_t)_mqttcredentials.Port.toInt());
         _active = false;
         _mqttcredentials.changed = false;
@@ -238,6 +239,7 @@ void MQTTConnectorClass::Loop()
 
     if(!_active && WiFi.status() == WL_CONNECTED && now - _lastConnectAttempt > 5000UL)
     {
+        pmLogging.LogLn("MQTT connecting!");
         Connect();
     }
 
@@ -269,6 +271,8 @@ void MQTTConnectorClass::Loop()
 
 bool MQTTConnectorClass::Connect()
 {
+    _lastConnectAttempt = millis();_lastConnectAttempt = millis();
+
     if(_mqttcredentials.Broker == "dummy")
         return false;
 
@@ -280,7 +284,7 @@ bool MQTTConnectorClass::Connect()
         _mqttClient->setClient(*_wifiClientmqtt);
     }
 
-    _lastConnectAttempt = millis();
+    
     if(!_mqttClient->connect(_mqttcredentials.DeviceName.c_str(), _mqttcredentials.User.c_str(), _mqttcredentials.Pass.c_str()))
     {
         pmLogging.LogLn("Could not connect to MQTT broker!");

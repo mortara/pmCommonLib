@@ -122,7 +122,7 @@ String WIFIManagerClass::handlePOSTrequest(AsyncWebServerRequest *request)
 
 bool WIFIManagerClass::initWiFi() {
     if(_wificredentials.SSID == ""){
-      Serial.println("Undefined SSID");
+      pmLogging.LogLn("Undefined SSID");
       return false;
     }
 
@@ -138,7 +138,7 @@ bool WIFIManagerClass::initWiFi() {
         dns.fromString(_wificredentials.DNS.c_str());
         localIP.fromString(_wificredentials.IP.c_str());
         localGateway.fromString(_wificredentials.Gateway.c_str());
-        
+
         if(_wificredentials.Hostname != "")
           WiFi.setHostname(_wificredentials.Hostname.c_str());
 
@@ -149,18 +149,18 @@ bool WIFIManagerClass::initWiFi() {
 
         
         if (!WiFi.config(localIP, localGateway, subnet, dns)){
-          Serial.println("STA Failed to configure with static IP");
+          pmLogging.LogLn("STA Failed to configure with static IP");
           return false;
         }
        
     }
     else
     {
-      Serial.println("DHCP enabled");
+      pmLogging.LogLn("DHCP enabled");
     }
 
     WiFi.begin(_wificredentials.SSID.c_str(), _wificredentials.PASS.c_str());
-    Serial.println("Connecting to WiFi...");
+    pmLogging.LogLn("Connecting to WiFi...");
 
     unsigned long currentMillis = millis();
     previousMillis = currentMillis;
@@ -168,7 +168,7 @@ bool WIFIManagerClass::initWiFi() {
     while(WiFi.status() != WL_CONNECTED) {
       currentMillis = millis();
       if (currentMillis - previousMillis >= interval) {
-        Serial.println("Failed to connect.");
+        pmLogging.LogLn("Failed to connect.");
         return false;
       }
     }
@@ -181,7 +181,7 @@ bool WIFIManagerClass::initWiFi() {
       _wificredentials.DNS = WiFi.dnsIP().toString();
     }
 
-    Serial.println(WiFi.localIP());
+    pmLogging.LogLn(WiFi.localIP().toString());
     return true;
 }
 
@@ -189,7 +189,7 @@ bool WIFIManagerClass::initWiFi() {
 
 void WIFIManagerClass::Setup()
 {
-    Serial.println("Setting up WIFI manager");
+  pmLogging.LogLn("Setting up WIFI manager");
 
     JsonDocument doc = pmCommonLib.ConfigHandler.LoadConfigFile(WIFIconfigFilePath);
     
@@ -197,7 +197,7 @@ void WIFIManagerClass::Setup()
 
     if(doc["SSID"].is<String>())
     {
-        Serial.println("Reading config-file!");
+        pmLogging.LogLn("Reading config-file!");
         _wificredentials.ConfigMode = String(doc["ConfigMode"].as<String>());
         _wificredentials.SSID = String(doc["SSID"].as<String>());
         _wificredentials.PASS = String(doc["PASS"].as<String>());
@@ -207,8 +207,8 @@ void WIFIManagerClass::Setup()
         _wificredentials.DNS = String(doc["dns"].as<String>());
         _wificredentials.Hostname = String(doc["Hostname"].as<String>());
 
-        Serial.println("SSID: " + _wificredentials.SSID);
-        Serial.println("PASS: " + _wificredentials.PASS);
+        pmLogging.LogLn("SSID: " + _wificredentials.SSID);
+        pmLogging.LogLn("PASS: " + _wificredentials.PASS);
     }
 
     if(_wificredentials.Hostname != "")
@@ -219,14 +219,13 @@ void WIFIManagerClass::Setup()
     if(!initWiFi())  
     {
         // Connect to Wi-Fi network with SSID and password
-        Serial.println("Setting AP (Access Point)");
+        pmLogging.LogLn("Setting AP (Access Point)");
        
         WiFi.softAP("ESP-WIFI-MANAGER-" + _wificredentials.Hostname, "", 7);
 
         IPAddress IP = WiFi.softAPIP();
-        Serial.print("AP IP address: ");
-        Serial.println(IP); 
-
+        pmLogging.LogLn("AP IP address: " + IP.toString());
+       
         captiveportalactive = true;
     }
     
@@ -239,10 +238,11 @@ void WIFIManagerClass::Begin()
 
   if(captiveportalactive)
   {
-    pmCommonLib.WebServer.Reset();
+    pmLogging.LogLn("Activating captive portal!");
     pmCommonLib.WebServer.RegisterOn("/", f1);
     pmCommonLib.WebServer.RegisterOn("/", f2, HTTP_POST);
     pmCommonLib.ConfigHandler.RegisterConfigPage("wifi", f1, f2);
+    pmCommonLib.WebServer.StopRegistrations();
   }
   else
   {

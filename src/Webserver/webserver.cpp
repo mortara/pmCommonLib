@@ -28,6 +28,11 @@ bool WebServerClass::IsSetup()
     return _setup;
 }
 
+void WebServerClass::StopRegistrations()
+{
+    _nomoreregistrations = true;
+}
+
 void WebServerClass::Reset()
 {
     _webserver->reset();
@@ -35,7 +40,7 @@ void WebServerClass::Reset()
 
 void WebServerClass::RegisterOn(const char *path, ArRequestHandlerFunction onRequest, WebRequestMethod method)
 {
-    if(!IsSetup())
+    if(!IsSetup() || _nomoreregistrations)
         return;
 
     Serial.println("Registering on-handler: " + String(method) + " " + String(path));
@@ -45,7 +50,7 @@ void WebServerClass::RegisterOn(const char *path, ArRequestHandlerFunction onReq
 
 void WebServerClass::RegisterNotFound(ArRequestHandlerFunction onRequest)
 {
-    if(!IsSetup())
+    if(!IsSetup() || _nomoreregistrations)
         return;
 
     Serial.println("Registering notfound-handler");

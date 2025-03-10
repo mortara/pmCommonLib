@@ -423,7 +423,7 @@ bool MQTTConnectorClass::SetupSelect(String topic, String component, String devi
     root["entity_category"] = "diagnostic";
 
     JsonArray optionobj = root["options"].to<JsonArray>();
-    for(int i=0;i<options.size();i++)
+    for(std::size_t i=0;i<options.size();i++)
     {
         optionobj.add(options[i]);
     }

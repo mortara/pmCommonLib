@@ -2,7 +2,7 @@
 #include "../pmCommonLib.hpp"
 
 String WIFIManagerClass::handleWifManagerRoot(AsyncWebServerRequest *request) {
-    Serial.println("Webserver handle request ... ");
+    Serial.println("Webserver handle wifi request ... ");
 
     String o1 = "";
     String o2 = "";
@@ -225,7 +225,13 @@ void WIFIManagerClass::Setup()
 
         IPAddress IP = WiFi.softAPIP();
         pmLogging.LogLn("AP IP address: " + IP.toString());
-       
+
+        ConfigHTTPRegisterFunction f1 = std::bind(&WIFIManagerClass::handleWifManagerRoot, this, std::placeholders::_1);
+        ConfigHTTPRegisterFunction f2 = std::bind(&WIFIManagerClass::handlePOSTrequest, this, std::placeholders::_1);
+        
+        pmCommonLib.WebServer.RegisterOn("/", f1);
+        pmCommonLib.WebServer.RegisterOn("/", f2, HTTP_POST);
+        pmCommonLib.WebServer.StopRegistrations();
         captiveportalactive = true;
     }
     
@@ -236,15 +242,7 @@ void WIFIManagerClass::Begin()
   ConfigHTTPRegisterFunction f1 = std::bind(&WIFIManagerClass::handleWifManagerRoot, this, std::placeholders::_1);
   ConfigHTTPRegisterFunction f2 = std::bind(&WIFIManagerClass::handlePOSTrequest, this, std::placeholders::_1);
 
-  if(captiveportalactive)
-  {
-    pmLogging.LogLn("Activating captive portal!");
-    pmCommonLib.WebServer.RegisterOn("/", f1);
-    pmCommonLib.WebServer.RegisterOn("/", f2, HTTP_POST);
-    pmCommonLib.ConfigHandler.RegisterConfigPage("wifi", f1, f2);
-    pmCommonLib.WebServer.StopRegistrations();
-  }
-  else
+  if(!captiveportalactive)
   {
     pmCommonLib.ConfigHandler.RegisterConfigPage("wifi", f1, f2);
   }

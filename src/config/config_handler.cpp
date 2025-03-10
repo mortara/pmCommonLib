@@ -203,7 +203,7 @@ bool pmConfigHandler::initLittleFS()
       Serial.println("An error has occurred while mounting LittleFS");
       return false;
     }
-    #elif
+    #else
     if (!LittleFS.begin(true)) {
         Serial.println("An error has occurred while mounting LittleFS");
         return false;
@@ -221,7 +221,7 @@ String pmConfigHandler::readFile(fs::FS &fs, const char * path){
 
     #if defined(ESP8266)
     File file = fs.open(path, "r");
-    #elif
+    #else
     File file = fs.open(path);
     #endif
     if(!file || file.isDirectory()){
@@ -241,12 +241,7 @@ String pmConfigHandler::readFile(fs::FS &fs, const char * path){
 void pmConfigHandler::writeFile(fs::FS &fs, const char * path, const char * message){
     Serial.printf("Writing file: %s\r\n", path);
 
-    #if defined(ESP8266)
     File file = fs.open(path, "w");
-    #elif
-    File file = fs.open(path, "w");
-    #endif
-
     
     if(!file){
       Serial.println("- failed to open file for writing");

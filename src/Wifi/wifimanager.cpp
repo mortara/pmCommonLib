@@ -136,12 +136,12 @@ bool WIFIManagerClass::initWiFi() {
         else
           subnet.fromString("255.255.255.0");
 
-        if (!WiFi.config(localIP, localGateway, subnet)){
+        
+        if (!WiFi.config(localIP, localGateway, subnet, dns)){
           Serial.println("STA Failed to configure with static IP");
           return false;
         }
-
-        WiFi.setDNS(dns);
+       
     }
     else
     {
@@ -222,6 +222,7 @@ void WIFIManagerClass::Begin()
   {
     pmCommonLib.WebServer.RegisterOn("/", f1);
     pmCommonLib.WebServer.RegisterOn("/", f2, HTTP_POST);
+    pmCommonLib.WebServer.StopRegistrations();
   }
   else
   {

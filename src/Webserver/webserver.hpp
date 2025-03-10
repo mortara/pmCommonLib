@@ -18,12 +18,13 @@ class WebServerClass
     private:
         AsyncWebServer *_webserver = nullptr;
         DNSServer *_dnsServer = nullptr;
-        
+        bool nomoreregistrations = false;
         bool _setup = false;
     public:
         void Setup();
         void Setup(ArRequestHandlerFunction onRequest, ArRequestHandlerFunction onNotFound);
         bool IsSetup();
+        void StopRegistrations();
         AsyncWebServer *GetServer();
 
         void Begin();

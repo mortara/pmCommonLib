@@ -6,9 +6,12 @@ void pmSettingsClass::Setup()
     
     
     String dname = WiFi.getHostname();
-    String clockrate = String(getCpuFrequencyMhz());
     RegisterSetting("DeviceName",dname);
+
+    #if !defined(ESP8266)
+    String clockrate = String(getCpuFrequencyMhz());
     RegisterSetting("CPU frequency",clockrate);
+    #endif
     
     JsonDocument doc = pmCommonLib.ConfigHandler.LoadConfigFile(settingsconfigFilePath);
     if(doc["devicename"].is<String>())
@@ -26,12 +29,14 @@ void pmSettingsClass::Setup()
                 WiFi.setHostname(setting->Value.c_str());
             }
 
+            #if !defined(ESP8266)
             if(sname == "cpu frequency")
             {
                 Serial.println("cpu frequency changed: " + setting->Value);
                 long intval = setting->Value.toInt();
                 setCpuFrequencyMhz(intval);
             }
+            #endif
         }
     }
 
@@ -145,12 +150,14 @@ String pmSettingsClass::ProcessConfigPagePOST(AsyncWebServerRequest *request)
                 WiFi.setHostname(setting->Value.c_str());
             }
 
+            #if !defined(ESP8266)
             if(sname == "cpu frequency")
             {
                 Serial.println("cpu frequency changed: " + setting->Value);
                 long intval = setting->Value.toInt();
                 setCpuFrequencyMhz(intval);
             }
+            #endif
         }
     }
 

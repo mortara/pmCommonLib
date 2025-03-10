@@ -19,15 +19,45 @@
   ],
   "license": "MIT",
   "homepage": "https://www.mortara.org/",
-  "dependencies": {
-    "MycilaWebSerial": "https://github.com/mathieucarbou/MycilaWebSerial.git",
-    "AsyncTCP": "https://github.com/ESP32Async/AsyncTCP",
-    "ESPAsyncTCP": "https://github.com/ESP32Async/ESPAsyncTCP",
-    "ESPAsyncWebServer": "https://github.com/ESP32Async/ESPAsyncWebServer.git",
-    "PubSubClient": "https://github.com/hmueller01/pubsubclient3.git",
-    "ArduinoJson": "https://github.com/bblanchon/ArduinoJson.git"
-    
-  },
+  "dependencies":
+  [
+    {
+      "owner": "ESP32Async",
+      "name": "AsyncTCP",
+      "version": "*",
+      "platforms": ["espressif32"]
+    },
+    {
+      "owner": "ESP32Async",
+      "name": "ESPAsyncTCP",
+      "version": "*",
+      "platforms": ["espressif8266"]
+    },
+    {
+      "owner": "mathieucarbou",
+      "name": "MycilaWebSerial",
+      "version": "https://github.com/mathieucarbou/MycilaWebSerial.git",
+      "platforms": "*"
+    },
+    {
+      "owner": "ESPAsyncWebServer",
+      "name": "MycilaWebSerial",
+      "version": "https://github.com/ESP32Async/ESPAsyncWebServer.git",
+      "platforms": "*"
+    },
+    {
+      "owner": "hmueller01",
+      "name": "PubSubClient",
+      "version": "https://github.com/hmueller01/pubsubclient3.git",
+      "platforms": "*"
+    },
+    {
+      "owner": "bblanchon",
+      "name": "ArduinoJson",
+      "version": "https://github.com/bblanchon/ArduinoJson.git",
+      "platforms": "*"
+    }
+  ],
   "frameworks": "*",
   "platforms": "*"
 }

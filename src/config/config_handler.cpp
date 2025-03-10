@@ -197,11 +197,19 @@ bool pmConfigHandler::initLittleFS()
 {
     if(_setup)
         return true;
-
+      
+    #if defined(ESP8266)
+    if (!LittleFS.begin()) {
+      Serial.println("An error has occurred while mounting LittleFS");
+      return false;
+    }
+    #elif
     if (!LittleFS.begin(true)) {
         Serial.println("An error has occurred while mounting LittleFS");
         return false;
     }
+    #endif
+
     Serial.println("LittleFS mounted successfully");
     
     return true;
@@ -211,7 +219,11 @@ bool pmConfigHandler::initLittleFS()
 String pmConfigHandler::readFile(fs::FS &fs, const char * path){
     Serial.printf("Reading file: %s\r\n", path);
 
+    #if defined(ESP8266)
+    File file = fs.open(path, "r");
+    #elif
     File file = fs.open(path);
+    #endif
     if(!file || file.isDirectory()){
       Serial.println("- failed to open file for reading");
       return String();
@@ -229,7 +241,13 @@ String pmConfigHandler::readFile(fs::FS &fs, const char * path){
 void pmConfigHandler::writeFile(fs::FS &fs, const char * path, const char * message){
     Serial.printf("Writing file: %s\r\n", path);
 
-    File file = fs.open(path, FILE_WRITE);
+    #if defined(ESP8266)
+    File file = fs.open(path, "r");
+    #elif
+    File file = fs.open(path, "w");
+    #endif
+
+    
     if(!file){
       Serial.println("- failed to open file for writing");
       return;
@@ -248,6 +266,9 @@ bool pmConfigHandler::SaveConfigFile(const char * name, JsonDocument data)
 
     String filetext;
     size_t size = serializeJson(data, filetext);
+
+    if(size == 0)
+      return false;
 
     writeFile(LittleFS, name, filetext.c_str());
     

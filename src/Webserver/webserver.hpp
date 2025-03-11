@@ -20,6 +20,8 @@ class WebServerClass
         DNSServer *_dnsServer = nullptr;
         bool _nomoreregistrations = false;
         bool _setup = false;
+        bool _serverrunning = false;
+        bool _startserver = false;
     public:
         void Setup();
         void Setup(ArRequestHandlerFunction onRequest, ArRequestHandlerFunction onNotFound);
@@ -27,10 +29,13 @@ class WebServerClass
         void Reset();
         void StopRegistrations();
         AsyncWebServer *GetServer();
+        void StartServer();
+        void StopServer();
 
         void Begin();
         void RegisterOn(const char *path, ArRequestHandlerFunction onRequest, WebRequestMethod method = HTTP_GET);
         void RegisterNotFound(ArRequestHandlerFunction onRequest);
+        void Loop();
 } ;
 
 #endif

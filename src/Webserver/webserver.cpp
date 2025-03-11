@@ -1,4 +1,5 @@
 #include "webserver.hpp"
+#include "pmCommonLib.hpp"
 
 void notFound(AsyncWebServerRequest *request) {
     request->send(404, "text/plain", "Not found");
@@ -7,16 +8,16 @@ void notFound(AsyncWebServerRequest *request) {
 
 void WebServerClass::Setup()
 {
-    Serial.println("Setting up Webserver");
+    pmLogging.LogLn("Setting up Webserver");
     _webserver = new AsyncWebServer(80);
     _webserver->onNotFound(notFound);
-    Serial.println("webserver done");
+    pmLogging.LogLn("webserver done");
     _setup = true;
 }
 
 void WebServerClass::Setup(ArRequestHandlerFunction onRequest, ArRequestHandlerFunction onNotFound)
 {
-    Serial.println("Setting up Webserver");
+    pmLogging.LogLn("Setting up Webserver");
     _webserver = new AsyncWebServer(80);
     _webserver->on("/", onRequest);
     _webserver->onNotFound(onNotFound);
@@ -43,7 +44,7 @@ void WebServerClass::RegisterOn(const char *path, ArRequestHandlerFunction onReq
     if(!IsSetup() || _nomoreregistrations)
         return;
 
-    Serial.println("Registering on-handler: " + String(method) + " " + String(path));
+        pmLogging.LogLn("Registering on-handler: " + String(method) + " " + String(path));
 
     _webserver->on(path, method, onRequest);
 }
@@ -53,27 +54,60 @@ void WebServerClass::RegisterNotFound(ArRequestHandlerFunction onRequest)
     if(!IsSetup() || _nomoreregistrations)
         return;
 
-    Serial.println("Registering notfound-handler");
+    pmLogging.LogLn("Registering notfound-handler");
     _webserver->onNotFound(onRequest);
 }
 
 void WebServerClass::Begin()
 {
-    if(_dnsServer == nullptr)
-    {
-        Serial.println("Starting DNS Server");
-        _dnsServer = new DNSServer();
-        _dnsServer->start(53, "*", WiFi.softAPIP());
-    }
-
     if(!IsSetup())
         return;
     
-    Serial.println("Starting webserver!");
-    _webserver->begin();
+    StartServer();
+}
+
+void WebServerClass::StartServer()
+{
+    pmLogging.LogLn("StartServer ....");
+    _startserver = true;
+    _serverrunning = false;
+}
+
+void WebServerClass::StopServer()
+{
+    pmLogging.LogLn("Stopping webserver!");
+
+    if(_serverrunning)
+        _webserver->end();
+
+    _serverrunning = false;
+    _startserver = false;
+
+    
 }
 
 AsyncWebServer *WebServerClass::GetServer()
 {
     return _webserver;
+}
+
+void WebServerClass::Loop()
+{
+    if(WiFi.isConnected() || WiFi.softAPIP().toString() != "0.0.0.0")
+    {
+        if(!_serverrunning && _startserver)
+        {
+            pmLogging.LogLn("Starting Webserver");
+            _startserver = false;
+            _serverrunning = true;
+            _webserver->begin();
+        }
+
+        if(_dnsServer == nullptr)
+        {
+            pmLogging.LogLn("Starting DNS Server");
+            _dnsServer = new DNSServer();
+            _dnsServer->start(53, "*", pmCommonLib.WiFiManager.GetIP());
+        }
+    }
 }

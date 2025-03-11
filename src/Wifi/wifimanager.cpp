@@ -320,6 +320,17 @@ unsigned long WIFIManagerClass::LastConnectionTry()
     return _lastConnectionTry;
 }
 
+IPAddress WIFIManagerClass::GetIP()
+{
+    if(!WiFi.isConnected())
+      return IPAddress();
+
+    if(WiFi.getMode() == WIFI_AP)
+      return WiFi.softAPIP();
+
+    return WiFi.localIP();
+}
+
 void WIFIManagerClass::Loop()
 {
     unsigned long currentMillis = millis();

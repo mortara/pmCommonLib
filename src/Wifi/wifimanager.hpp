@@ -65,6 +65,7 @@ class WIFIManagerClass
         unsigned long LastConnectionTry();
         void LoadConfig();
         void SaveConfig();
+        IPAddress GetIP();
 
         String captivePortalRedirector(AsyncWebServerRequest *request);
         String handlePOSTrequest(AsyncWebServerRequest *request);

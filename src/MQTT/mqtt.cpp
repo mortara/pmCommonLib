@@ -271,7 +271,7 @@ void MQTTConnectorClass::Loop()
 
 bool MQTTConnectorClass::Connect()
 {
-    _lastConnectAttempt = millis();_lastConnectAttempt = millis();
+    _lastConnectAttempt = millis();
 
     if(_mqttcredentials.Broker == "dummy")
         return false;

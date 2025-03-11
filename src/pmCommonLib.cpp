@@ -69,9 +69,14 @@ void pmCommonLibClass::Loop()
 
     previousMillis = currentMillis;
 
+    WiFiManager.Loop();
+
     if(OTAHandler.IsSetup())
         OTAHandler.Loop();
     
+    if(WebServer.IsSetup())
+        WebServer.Loop();
+
     #ifndef PMCOMMONNOWEBSERIAL
     if(WebSerial.IsSetup())
         WebSerial.Loop();
@@ -81,9 +86,7 @@ void pmCommonLibClass::Loop()
     if(MQTTConnector.IsSetup())
         MQTTConnector.Loop();
     #endif
-
-    WiFiManager.Loop();
-    
+ 
 }
 
 

@@ -40,8 +40,8 @@
       "platforms": "*"
     },
     {
-      "owner": "ESPAsyncWebServer",
-      "name": "MycilaWebSerial",
+      "owner": "ESP32Async",
+      "name": "ESPAsyncWebServer",
       "version": "https://github.com/ESP32Async/ESPAsyncWebServer.git",
       "platforms": "*"
     },

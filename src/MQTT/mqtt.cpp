@@ -169,6 +169,12 @@ void MQTTConnectorClass::Begin()
     }
 }
 
+void MQTTConnectorClass::ConfigureCallback(std::function<void(char*, uint8_t*, unsigned int)> callback)
+{
+    _mqttcredentials.callback = callback;
+    _mqttClient->setCallback(_mqttcredentials.callback);
+}
+
 bool MQTTConnectorClass::IsSetup()
 {
     return _setup;
@@ -312,7 +318,7 @@ bool MQTTConnectorClass::SetupSensor(String topic, String component, String devi
     String config_topic = header+ "_" + topic + "/config";
 	String name = _mqttcredentials.DeviceName + "_" + component + "_" + topic;
 
-    pmLogging.LogLn("Configuring switch " + config_topic);
+    pmLogging.LogLn("Configuring sensor " + config_topic);
 
     JsonDocument root;
 

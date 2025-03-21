@@ -68,6 +68,7 @@ class MQTTConnectorClass
     public:
         void Setup(MQTTCallBackFunction callback = NULL);
         void Begin();
+        void ConfigureCallback(MQTTCallBackFunction callback);
         void ConfigureDevice(String devicename, String manufacturer, String model);
         void Configure(String broker, int port, String user, String password, String devicename, String manufacturer, String model, bool allowchanges = true);
         void Loop();

@@ -1,6 +1,35 @@
 #include "mqtt.hpp"
 #include "../pmCommonLib.hpp"
 
+MQTTConnectorClass::~MQTTConnectorClass()
+{
+    // Clean up dynamically allocated WiFi client
+    if(_wifiClientmqtt != nullptr)
+    {
+        delete _wifiClientmqtt;
+        _wifiClientmqtt = nullptr;
+    }
+    
+    // Clean up MQTT client
+    if(_mqttClient != nullptr)
+    {
+        delete _mqttClient;
+        _mqttClient = nullptr;
+    }
+    
+    // Clean up task list and all pending messages
+    if(Tasks != nullptr)
+    {
+        // Delete all pending messages
+        for(auto it = Tasks->begin(); it != Tasks->end(); ++it)
+        {
+            delete *it;
+        }
+        delete Tasks;
+        Tasks = nullptr;
+    }
+}
+
 String MQTTConnectorClass::mqtt_config_page(AsyncWebServerRequest *request) {
     Serial.println("Webserver handle request ... ");
   
@@ -117,13 +146,13 @@ void MQTTConnectorClass::Setup(std::function<void(char*, uint8_t*, unsigned int)
     if(doc["Broker"].is<String>())
     {
         pmLogging.LogLn("Reading MQTT config-file!");
-        _mqttcredentials.Broker = String(doc["Broker"].as<String>());
-        _mqttcredentials.Port = String(doc["Port"].as<String>());
-        _mqttcredentials.User = String(doc["User"].as<String>());
-        _mqttcredentials.Pass = String(doc["Pass"].as<String>());
-        _mqttcredentials.DeviceName = String(doc["DeviceName"].as<String>());
-        _mqttcredentials.ManuFacturer = String(doc["ManuFacturer"].as<String>());
-        _mqttcredentials.Model = String(doc["Model"].as<String>());
+        _mqttcredentials.Broker = doc["Broker"].as<String>();
+        _mqttcredentials.Port = doc["Port"].as<String>();
+        _mqttcredentials.User = doc["User"].as<String>();
+        _mqttcredentials.Pass = doc["Pass"].as<String>();
+        _mqttcredentials.DeviceName = doc["DeviceName"].as<String>();
+        _mqttcredentials.ManuFacturer = doc["ManuFacturer"].as<String>();
+        _mqttcredentials.Model = doc["Model"].as<String>();
 
         pmLogging.LogLn("Broker: " + _mqttcredentials.Broker);
         pmLogging.LogLn("Port: " + _mqttcredentials.Port);
@@ -259,10 +288,10 @@ void MQTTConnectorClass::Loop()
     {
       
         MQTTMessages *bt = Tasks->front();
+        Tasks->pop_front();
         
         bool ok = SendPayload(bt->payload, bt->topic, bt->Retain);
 
-        Tasks->remove(bt);
         if(!ok)
         {
             pmLogging.LogLn("unable to publish mqtt message ...");
@@ -270,7 +299,9 @@ void MQTTConnectorClass::Loop()
             delay(1000);
         }
         else
+        {
             delete bt;
+        }
 
     }
 }
@@ -570,7 +601,7 @@ bool MQTTConnectorClass::SendPayload(String payload, String topic, bool retain)
 void MQTTConnectorClass::PublishMessage(JsonDocument root, String component, bool retain, String topic, MQTTClassType sensor)
 {
     
-    if(root == NULL)
+    if(root.isNull())
         return;
 
     String typ = "sensor";

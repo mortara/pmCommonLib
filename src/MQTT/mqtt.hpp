@@ -66,6 +66,7 @@ class MQTTConnectorClass
         void saveConfig();
 
     public:
+        ~MQTTConnectorClass();
         void Setup(MQTTCallBackFunction callback = NULL);
         void Begin();
         void ConfigureCallback(MQTTCallBackFunction callback);

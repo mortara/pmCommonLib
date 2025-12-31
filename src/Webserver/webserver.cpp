@@ -1,6 +1,26 @@
 #include "webserver.hpp"
 #include "pmCommonLib.hpp"
 
+WebServerClass::~WebServerClass()
+{
+    // Clean up web server
+    if(_webserver != nullptr)
+    {
+        if(_serverrunning)
+            _webserver->end();
+        delete _webserver;
+        _webserver = nullptr;
+    }
+    
+    // Clean up DNS server
+    if(_dnsServer != nullptr)
+    {
+        _dnsServer->stop();
+        delete _dnsServer;
+        _dnsServer = nullptr;
+    }
+}
+
 void notFound(AsyncWebServerRequest *request) {
     request->send(404, "text/plain", "Not found");
 }

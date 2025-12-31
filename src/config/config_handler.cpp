@@ -234,6 +234,7 @@ String pmConfigHandler::readFile(fs::FS &fs, const char * path){
       fileContent = file.readStringUntil('\n');
       break;     
     }
+    file.close();
     return fileContent;
 }
 
@@ -252,6 +253,7 @@ void pmConfigHandler::writeFile(fs::FS &fs, const char * path, const char * mess
     } else {
       Serial.println("- write failed");
     }
+    file.close();
 }
 
 bool pmConfigHandler::SaveConfigFile(const char * name, JsonDocument data)

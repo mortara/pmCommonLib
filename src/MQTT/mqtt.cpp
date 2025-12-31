@@ -25,7 +25,6 @@ MQTTConnectorClass::~MQTTConnectorClass()
         {
             delete *it;
         }
-        Tasks->clear();
         delete Tasks;
         Tasks = nullptr;
     }

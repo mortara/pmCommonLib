@@ -459,14 +459,16 @@ void setup() {
 
 ## 📖 Examples
 
-For complete working examples, check the `src/main.cpp` file or visit the [examples section](examples/) of this repository.
+For a basic working example, check the `src/main.cpp` file in this repository.
 
-Example projects:
+Potential example projects you can build with pmCommonLib:
 - Basic setup with WiFi and OTA
 - MQTT sensor with Home Assistant integration
 - Web-based configuration interface
 - I2C device scanner and reader
 - Complete IoT device template
+
+See the Quick Start and Modules Documentation sections above for code examples.
 
 ## 🤝 Contributing
 

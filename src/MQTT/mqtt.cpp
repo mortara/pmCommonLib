@@ -289,17 +289,18 @@ void MQTTConnectorClass::Loop()
     {
       
         MQTTMessages *bt = Tasks->front();
+        Tasks->pop_front();
         
         bool ok = SendPayload(bt->payload, bt->topic, bt->Retain);
 
         if(!ok)
         {
             pmLogging.LogLn("unable to publish mqtt message ...");
+            Tasks->push_back(bt);
             delay(1000);
         }
         else
         {
-            Tasks->remove(bt);
             delete bt;
         }
 

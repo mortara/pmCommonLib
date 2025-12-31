@@ -25,8 +25,6 @@ typedef struct {
     String Hostname = "";
 } WIFICreds;
 
-extern WIFICreds _wificredentials;
-
 
 #define WIFIconfigFilePath "/wifi_config.txt"
 
@@ -34,6 +32,7 @@ class WIFIManagerClass
 {
     private:
         AsyncWebServer *_WebServer;    
+        WIFICreds _wificredentials;
 
         bool connecting = false;
         bool captiveportalactive = false;

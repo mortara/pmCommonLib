@@ -189,14 +189,14 @@ void WIFIManagerClass::LoadConfig()
   if(doc["SSID"].is<String>())
   {
       pmLogging.LogLn("Reading config-file!");
-      _wificredentials.ConfigMode = String(doc["ConfigMode"].as<String>());
-      _wificredentials.SSID = String(doc["SSID"].as<String>());
-      _wificredentials.PASS = String(doc["PASS"].as<String>());
-      _wificredentials.IP = String(doc["IP"].as<String>());
-      _wificredentials.Gateway = String(doc["Gateway"].as<String>());
-      _wificredentials.Subnet = String(doc["Subnet"].as<String>());
-      _wificredentials.DNS = String(doc["dns"].as<String>());
-      _wificredentials.Hostname = String(doc["Hostname"].as<String>());
+      _wificredentials.ConfigMode = doc["ConfigMode"].as<String>();
+      _wificredentials.SSID = doc["SSID"].as<String>();
+      _wificredentials.PASS = doc["PASS"].as<String>();
+      _wificredentials.IP = doc["IP"].as<String>();
+      _wificredentials.Gateway = doc["Gateway"].as<String>();
+      _wificredentials.Subnet = doc["Subnet"].as<String>();
+      _wificredentials.DNS = doc["dns"].as<String>();
+      _wificredentials.Hostname = doc["Hostname"].as<String>();
 
       pmLogging.LogLn("SSID: " + _wificredentials.SSID);
       pmLogging.LogLn("PASS: " + _wificredentials.PASS);
@@ -398,5 +398,3 @@ void WIFIManagerClass::Loop()
         _lastConnectionTry = currentMillis;
     }*/
 }
-
-WIFICreds _wificredentials;

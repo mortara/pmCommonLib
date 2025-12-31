@@ -23,6 +23,7 @@ class WebServerClass
         bool _serverrunning = false;
         bool _startserver = false;
     public:
+        ~WebServerClass();
         void Setup();
         void Setup(ArRequestHandlerFunction onRequest, ArRequestHandlerFunction onNotFound);
         bool IsSetup();

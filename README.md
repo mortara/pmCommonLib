@@ -459,16 +459,25 @@ void setup() {
 
 ## 📖 Examples
 
-For a basic working example, check the `src/main.cpp` file in this repository.
+For reference, you can see the library's basic structure in the `src/main.cpp` file (note: this is commented out and serves as a template).
 
-Potential example projects you can build with pmCommonLib:
+### Code Examples in This Documentation
+
+This README provides comprehensive code examples for all modules:
+- **Quick Start** section - Basic and advanced setup patterns
+- **Modules Documentation** section - Usage examples for all 9 modules
+- **Configuration** section - Build flags and runtime configuration
+
+### Example Project Ideas
+
+You can build various projects with pmCommonLib:
 - Basic setup with WiFi and OTA
 - MQTT sensor with Home Assistant integration
 - Web-based configuration interface
 - I2C device scanner and reader
 - Complete IoT device template
 
-See the Quick Start and Modules Documentation sections above for code examples.
+See the Quick Start and Modules Documentation sections above for working code examples.
 
 ## 🤝 Contributing
 
@@ -522,7 +531,7 @@ This project is licensed under the MIT License - see below for details:
 ```
 MIT License
 
-Copyright (c) 2024 Patrick Mortara
+Copyright (c) 2025 Patrick Mortara
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

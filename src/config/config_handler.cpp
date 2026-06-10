@@ -51,103 +51,35 @@ void handleConfigManagerRoot(AsyncWebServerRequest *request) {
                   <title>ESP device manager</title>\
                   <meta name='viewport' content='width=device-width, initial-scale=1'>\
                   <style>\
-                        html {\
-                          font-family: Arial, Helvetica, sans-serif; \
-                          display: inline-block; \
-                          text-align: center;\
-                        }\
-                        h1 {\
-                          font-size: 1.8rem; \
-                          color: white;\
-                        }\
-                        p {\
-                          font-size: 1.4rem;\
-                        }\
-                        .topnav { \
-                          overflow: hidden; \
-                          background-color: #0A1128;\
-                        }\
-                        body {\
-                          margin: 0;\
-                        }\
-                        .content {\
-                          padding: 5%;\
-                        }\
-                        .card-grid {\
-                          max-width: 800px;\
-                          margin: 0 auto; \
-                          display: grid; \
-                          grid-gap: 2rem; \
-                          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));\
-                        }\
-                        .card {\
-                          background-color: white; \
-                          box-shadow: 2px 2px 12px 1px rgba(140,140,140,.5);\
-                        }\
-                        .card-title { \
-                          font-size: 1.2rem;\
-                          font-weight: bold;\
-                          color: #034078\
-                        }\
-                        input[type=submit] {\
-                          border: none;\
-                          color: #FEFCFB;\
-                          background-color: #034078;\
-                          padding: 15px 15px;\
-                          text-align: center;\
-                          text-decoration: none;\
-                          display: inline-block;\
-                          font-size: 16px;\
-                          width: 100px;\
-                          margin-right: 10px;\
-                          border-radius: 4px;\
-                          transition-duration: 0.4s;\
-                          }\
-                        input[type=submit]:hover {\
-                          background-color: #1282A2;\
-                        }\
-                        input[type=text], input[type=number], select {\
-                          width: 50%;\
-                          padding: 12px 20px;\
-                          margin: 18px;\
-                          display: inline-block;\
-                          border: 1px solid #ccc;\
-                          border-radius: 4px;\
-                          box-sizing: border-box;\
-                        }\
-                        label {\
-                          font-size: 1.2rem;\
-                        }\
-                        .value{\
-                          font-size: 1.2rem;\
-                          color: #1282A2;  \
-                        }\
-                        .state {\
-                          font-size: 1.2rem;\
-                          color: #1282A2;\
-                        }\
-                        button {\
-                          border: none;\
-                          color: #FEFCFB;\
-                          padding: 15px 32px;\
-                          text-align: center;\
-                          font-size: 16px;\
-                          width: 100px;\
-                          border-radius: 4px;\
-                          transition-duration: 0.4s;\
-                        }\
-                        .button-on {\
-                          background-color: #034078;\
-                        }\
-                        .button-on:hover {\
-                          background-color: #1282A2;\
-                        }\
-                        .button-off {\
-                          background-color: #858585;\
-                        }\
-                        .button-off:hover {\
-                          background-color: #252524;\
-                        }\
+                        *, *::before, *::after { box-sizing: border-box; }\
+                        html { font-family: Arial, Helvetica, sans-serif; }\
+                        body { margin: 0; background-color: #f0f2f5; color: #222; }\
+                        h1 { font-size: 1.6rem; color: white; margin: 0; padding: 16px 24px; }\
+                        h2 { font-size: 1.1rem; color: #034078; margin: 0 0 20px 0; }\
+                        .topnav { background-color: #0A1128; border-bottom: 3px solid #1282A2; }\
+                        .bottomnav { text-align: center; padding: 16px; }\
+                        .bottomnav a { color: #034078; text-decoration: none; font-weight: 600; }\
+                        .bottomnav a:hover { color: #1282A2; }\
+                        .content { padding: 32px 5%; }\
+                        .card-grid { max-width: 480px; margin: 0 auto; display: grid; grid-gap: 2rem; grid-template-columns: 1fr; }\
+                        .card { background-color: white; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); padding: 28px 32px; }\
+                        .card a { display: block; padding: 10px 0; color: #034078; text-decoration: none; font-size: 1rem; font-weight: 600; border-bottom: 1px solid #eee; }\
+                        .card a:hover { color: #1282A2; }\
+                        .card p:last-child a { border-bottom: none; }\
+                        .form-group { display: flex; flex-direction: column; margin-bottom: 18px; }\
+                        .form-group label { font-size: 0.85rem; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }\
+                        .form-actions { margin-top: 24px; text-align: right; }\
+                        input[type=text], input[type=password], input[type=number], select { width: 100%; padding: 10px 14px; border: 1px solid #ccc; border-radius: 5px; font-size: 1rem; background-color: #fafafa; }\
+                        input[type=text]:focus, input[type=password]:focus, input[type=number]:focus, select:focus { outline: none; border-color: #1282A2; background-color: #fff; box-shadow: 0 0 0 3px rgba(18,130,162,0.15); }\
+                        input[type=submit], button { border: none; color: #FEFCFB; background-color: #034078; padding: 10px 28px; font-size: 0.95rem; font-weight: 600; border-radius: 5px; cursor: pointer; transition: background-color 0.2s; }\
+                        input[type=submit]:hover, button:hover { background-color: #1282A2; }\
+                        label { font-size: 1rem; }\
+                        .card-title { font-size: 1.1rem; font-weight: bold; color: #034078; margin-bottom: 16px; }\
+                        .value, .state { font-size: 1.1rem; color: #1282A2; }\
+                        .button-on { background-color: #034078; }\
+                        .button-on:hover { background-color: #1282A2; }\
+                        .button-off { background-color: #858585; }\
+                        .button-off:hover { background-color: #252524; }\
                   </style>\
                 </head>\
                 <body>\

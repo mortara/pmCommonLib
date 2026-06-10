@@ -94,7 +94,7 @@ String pmSettingsClass::ServeConfigPageHTML(AsyncWebServerRequest *request)
     Serial.println("Webserver handle request ... ");
   
     
-    String html = "<form action='/config/general.html' method='POST'><p>";
+    String html = "<form action='/config/general.html' method='POST'>";
 
     for (std::list<pmSettingsStruct>::iterator setting = Settings.begin(); setting != Settings.end(); ++setting)
     {
@@ -104,11 +104,13 @@ String pmSettingsClass::ServeConfigPageHTML(AsyncWebServerRequest *request)
         if(label == "")
             label = setting->Name;
 
-        html += "<label for='"+name+"'>" + label + "</label>";
-        html += "<input type='text' id ='"+name+"' name='"+name+"' value='" + setting->Value + "'><br>";
+        html += "<div class='form-group'>";
+        html += "<label for='" + name + "'>" + label + "</label>";
+        html += "<input type='text' id='" + name + "' name='" + name + "' value='" + setting->Value + "'>";
+        html += "</div>";
     }
 
-    html += "<input type ='submit' value ='Submit'></p></form>";
+    html += "<div class='form-actions'><input type='submit' value='Submit'></div></form>";
   
     return html;
 }

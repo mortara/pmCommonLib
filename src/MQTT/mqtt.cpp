@@ -34,25 +34,23 @@ String MQTTConnectorClass::mqtt_config_page(AsyncWebServerRequest *request) {
     Serial.println("Webserver handle request ... ");
   
     
-    String html = "<form action='/config/mqtt.html' method='POST'>\
-                    <p>\
-                        <label for='broker'>Broker</label>\
-                        <input type='text' id ='broker' name='broker' value='" + _mqttcredentials.Broker + "'><br>\
-                        <label for='port'>Port</label>\
-                        <input type='text' id ='port' name='port' value='" + _mqttcredentials.Port + "'><br>\
-                        <label for='user'>User</label>\
-                        <input type='text' id ='user' name='user' value='" + _mqttcredentials.User + "'><br>\
-                        <label for='pass'>Password</label>\
-                        <input type='text' id ='pass' name='pass' value='" + _mqttcredentials.Pass + "'><br>\
-                        <label for='devicename'>Device name</label>\
-                        <input type='text' id ='devicename' name='devicename' value='" + _mqttcredentials.DeviceName + "'><br>\
-                        <label for='manufacturer'>Manufacturer</label>\
-                        <input type='text' id ='manufacturer' name='manufacturer' value='" + _mqttcredentials.ManuFacturer + "'><br>\
-                        <label for='model'>Model</label>\
-                        <input type='text' id ='model' name='model' value='" + _mqttcredentials.Model + "'><br>\
-                        <input type ='submit' value ='Submit'>\
-                    </p>\
-                    </form>";
+    String html = "<form action='/config/mqtt.html' method='POST'>";
+    html += "<div class='form-group'><label for='broker'>Broker</label>";
+    html += "<input type='text' id='broker' name='broker' value='" + _mqttcredentials.Broker + "'></div>";
+    html += "<div class='form-group'><label for='port'>Port</label>";
+    html += "<input type='text' id='port' name='port' value='" + _mqttcredentials.Port + "'></div>";
+    html += "<div class='form-group'><label for='user'>User</label>";
+    html += "<input type='text' id='user' name='user' value='" + _mqttcredentials.User + "'></div>";
+    html += "<div class='form-group'><label for='pass'>Password</label>";
+    html += "<input type='password' id='pass' name='pass' value='" + _mqttcredentials.Pass + "'></div>";
+    html += "<div class='form-group'><label for='devicename'>Device name</label>";
+    html += "<input type='text' id='devicename' name='devicename' value='" + _mqttcredentials.DeviceName + "'></div>";
+    html += "<div class='form-group'><label for='manufacturer'>Manufacturer</label>";
+    html += "<input type='text' id='manufacturer' name='manufacturer' value='" + _mqttcredentials.ManuFacturer + "'></div>";
+    html += "<div class='form-group'><label for='model'>Model</label>";
+    html += "<input type='text' id='model' name='model' value='" + _mqttcredentials.Model + "'></div>";
+    html += "<div class='form-actions'><input type='submit' value='Submit'></div>";
+    html += "</form>";
   
     return html;
   }
@@ -258,7 +256,7 @@ void MQTTConnectorClass::Loop()
 {
     unsigned long now = millis();
 
-    if(Tasks == nullptr)
+    if(Tasks == nullptr || _mqttcredentials.Broker.c_str() == "dummy")
     {
         pmLogging.LogLn("MQTT Client has not been set up!");
         return;

@@ -28,10 +28,21 @@ typedef struct {
 
 #define WIFIconfigFilePath "/wifi_config.txt"
 
+// How long a single connection attempt is given to succeed before it is
+// considered failed. Real routers/DHCP servers can need well over 5s under
+// load, weak signal or busy channels, so this must not be too tight.
+#define WIFI_CONNECT_TIMEOUT_MS 20000UL
+// Number of connection attempts tried against the stored credentials before
+// falling back to the captive portal.
+#define WIFI_MAX_CONNECT_ATTEMPTS 3
+// Once the captive portal is active, retry the stored credentials on this
+// interval so the device can recover on its own once the network is back.
+#define WIFI_PORTAL_RETRY_INTERVAL_MS 60000UL
+
 class WIFIManagerClass
 {
     private:
-        AsyncWebServer *_WebServer;    
+        AsyncWebServer *_WebServer;
         WIFICreds _wificredentials;
 
         bool connecting = false;
@@ -39,6 +50,8 @@ class WIFIManagerClass
         bool connected = false;
         unsigned long interval = 10000;
         unsigned long _lastConnectionTry = 0;
+        unsigned long _lastPortalRetry = 0;
+        int _connectionAttempts = 0;
         unsigned long _lastMqttupdate = 0;
 
         // Timer variables

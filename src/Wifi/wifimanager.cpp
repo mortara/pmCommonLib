@@ -111,7 +111,6 @@ String WIFIManagerClass::handlePOSTrequest(AsyncWebServerRequest *request)
 
     SaveConfig();
     Disconnect();
-    initWiFi();
     Connect();
     return "";
 }
@@ -150,9 +149,20 @@ bool WIFIManagerClass::initWiFi()
       pmLogging.LogLn("DHCP enabled");
     }
 
-    WiFi.mode(WIFI_STA);
+    // Hostname must be set before WiFi.begin()/WiFi.mode() to reliably take
+    // effect for the DHCP client's hostname option.
+    if(_wificredentials.Hostname != "")
+        WiFi.setHostname(_wificredentials.Hostname.c_str());
+
+    // Keep the AP alive while we retry STA from within the captive portal,
+    // otherwise switching mode here would tear the portal down mid-retry.
+    WiFi.mode(captiveportalactive ? WIFI_AP_STA : WIFI_STA);
     WiFi.begin(_wificredentials.SSID.c_str(), _wificredentials.PASS.c_str(), 0, __null, false);
-    
+
+    connecting = true;
+    _lastConnectionTry = millis();
+    _connectionAttempts = 0;
+
     return true;
 }
 
@@ -160,15 +170,11 @@ void WIFIManagerClass::Setup(bool autoconnect)
 {
   pmLogging.LogLn("Setting up WIFI manager");
   LoadConfig();
-    
-  initWiFi();  
 
   if(autoconnect)
     Connect();
-  
-  if(_wificredentials.Hostname != "")
-    WiFi.setHostname(_wificredentials.Hostname.c_str());
-  else
+
+  if(_wificredentials.Hostname == "")
     _wificredentials.Hostname = WiFi.getHostname();
 
   ConfigHTTPRegisterFunction f1 = std::bind(&WIFIManagerClass::handleWifManagerRoot, this, std::placeholders::_1);
@@ -179,7 +185,10 @@ void WIFIManagerClass::Setup(bool autoconnect)
 
 void WIFIManagerClass::Begin()
 {
-  Connect();
+  // Avoid kicking off a second, redundant connection attempt if Setup()
+  // (autoconnect) already has one in flight.
+  if(!connecting && !connected)
+    Connect();
 }
 
 void WIFIManagerClass::LoadConfig()
@@ -221,7 +230,10 @@ void WIFIManagerClass::StartCaptivePortal()
 {
   // Connect to Wi-Fi network with SSID and password
   pmLogging.LogLn("Setting AP (Access Point)");
-       
+
+  // AP_STA (rather than plain AP) so the device can keep retrying the
+  // stored STA credentials in the background while the portal is up.
+  WiFi.mode(WIFI_AP_STA);
   WiFi.softAP("ESP-WIFI-MANAGER-" + _wificredentials.Hostname, "", 7);
 
   IPAddress IP = WiFi.softAPIP();
@@ -238,9 +250,10 @@ void WIFIManagerClass::StartCaptivePortal()
 
 bool WIFIManagerClass::Connect()
 {
-   connecting = true;
-   _lastConnectionTry = millis();
-   return WiFi.reconnect();
+   // A full initWiFi() (fresh WiFi.begin() with the current credentials) is
+   // more reliable than WiFi.reconnect(), and also (re)establishes the
+   // connecting/_lastConnectionTry bookkeeping Loop() relies on.
+   return initWiFi();
 }
 
 #ifndef PMCOMMONNOMQTT
@@ -274,9 +287,10 @@ void WIFIManagerClass::setupMQTT()
 void WIFIManagerClass::Disconnect()
 {
     pmLogging.LogLn("disonnecting from WiFi ..");
-    
+
     connecting = false;
     connected = false;
+    _connectionAttempts = 0;
 
     WiFi.disconnect();
 }
@@ -351,16 +365,45 @@ void WIFIManagerClass::Loop()
         }
 
         connecting = false;
+        _connectionAttempts = 0;
+
+        if(captiveportalactive)
+        {
+            pmLogging.LogLn("Reconnected to configured WiFi network, stopping captive portal");
+            WiFi.softAPdisconnect(true);
+            WiFi.mode(WIFI_STA);
+            captiveportalactive = false;
+        }
+
         DisplayInfo();
     }
 
-    if(connecting && !connected && currentMillis - _lastConnectionTry > 5000)
+    if(connecting && !connected && currentMillis - _lastConnectionTry > WIFI_CONNECT_TIMEOUT_MS)
     {
-        Disconnect();
-        pmLogging.LogLn("WiFI could not be connected!");
-        pmLogging.LogLn("Starting captive Portal");
-        StartCaptivePortal();
-        
+        _connectionAttempts++;
+
+        if(_connectionAttempts < WIFI_MAX_CONNECT_ATTEMPTS)
+        {
+            pmLogging.LogLn("WiFi connect attempt " + String(_connectionAttempts) + " of " + String(WIFI_MAX_CONNECT_ATTEMPTS) + " timed out, retrying ...");
+            _lastConnectionTry = currentMillis;
+            WiFi.disconnect();
+            WiFi.begin(_wificredentials.SSID.c_str(), _wificredentials.PASS.c_str(), 0, __null, false);
+        }
+        else
+        {
+            pmLogging.LogLn("WiFi could not be connected after " + String(_connectionAttempts) + " attempts!");
+            pmLogging.LogLn("Starting captive Portal");
+            Disconnect();
+            _lastPortalRetry = currentMillis;
+            StartCaptivePortal();
+        }
+    }
+
+    if(captiveportalactive && !connecting && !connected && currentMillis - _lastPortalRetry > WIFI_PORTAL_RETRY_INTERVAL_MS)
+    {
+        pmLogging.LogLn("Retrying configured WiFi network while captive portal is active ...");
+        _lastPortalRetry = currentMillis;
+        Connect();
     }
 
     #ifndef PMCOMMONNOMQTT
@@ -388,13 +431,4 @@ void WIFIManagerClass::Loop()
         }
     }
     #endif
-
-    // if WiFi is down, try reconnecting
-    /*if (!connecting && !connected && (currentMillis - _lastConnectionTry >= interval)) 
-    {
-        WebSerialLogger.println("Reconnecting to WiFi...");
-        WiFi.reconnect();
-        connecting = true;
-        _lastConnectionTry = currentMillis;
-    }*/
 }

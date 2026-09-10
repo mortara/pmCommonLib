@@ -3,19 +3,19 @@
 #include "pmCommonLib.hpp"
 
 
-void pmLoggingClass::LogLn(String text, bool towebserial, bool toserial)
+void pmLoggingClass::LogLn(String text, bool towebserial, bool toserial, bool tofile)
 {
-    Log(text.c_str(),true, towebserial,toserial);
+    Log(text.c_str(), true, towebserial, toserial, tofile);
 }
 
-void pmLoggingClass::Log(String text, bool newline, bool towebserial, bool toserial)
+void pmLoggingClass::Log(String text, bool newline, bool towebserial, bool toserial, bool tofile)
 {
-    Log(text.c_str(),false, towebserial,toserial);
+    Log(text.c_str(), false, towebserial, toserial, tofile);
 }
 
-void pmLoggingClass::LogLn(const char *text, bool towebserial, bool toserial)
+void pmLoggingClass::LogLn(const char *text, bool towebserial, bool toserial, bool tofile)
 {
-    Log(text, true, towebserial, toserial);
+    Log(text, true, towebserial, toserial, tofile);
 }
 
 void pmLoggingClass::LogLn()
@@ -23,7 +23,7 @@ void pmLoggingClass::LogLn()
     Log("", true);
 }
 
-void pmLoggingClass::Log(const char *text, bool newline, bool towebserial, bool toserial)
+void pmLoggingClass::Log(const char *text, bool newline, bool towebserial, bool toserial, bool tofile)
 {
     #ifndef PMCOMMONNOWEBSERIAL
     if(towebserial)
@@ -43,7 +43,8 @@ void pmLoggingClass::Log(const char *text, bool newline, bool towebserial, bool 
             Serial.print(text);
     }
 
-    writeToLogFile(text, newline);
+    if(tofile)
+        bufferForFile(text, newline);
 }
 
 String pmLoggingClass::logFileName(int index)
@@ -76,6 +77,8 @@ void pmLoggingClass::Setup()
 
     _currentLogFileSize = 0;
     _atLineStart = true;
+    _fileBuffer = "";
+    _lastFlushMillis = millis();
     _fileLoggingReady = true;
 }
 
@@ -87,34 +90,58 @@ void pmLoggingClass::Begin()
     pmCommonLib.ConfigHandler.RegisterConfigPage("logs", f1, f2);
 }
 
-void pmLoggingClass::writeToLogFile(const char *text, bool newline)
+void pmLoggingClass::Loop()
+{
+    if(_fileBuffer.length() == 0)
+        return;
+
+    if(_fileBuffer.length() >= LOGFILE_FLUSH_THRESHOLD_BYTES ||
+       (millis() - _lastFlushMillis) >= LOGFILE_FLUSH_INTERVAL_MS)
+    {
+        flushLogBuffer();
+    }
+}
+
+// Appends to the in-RAM buffer only; the actual flash write happens in
+// Loop() (or is forced early by flushLogBuffer() from handleLogsRoot/Post),
+// so this is cheap enough to call from hot paths.
+void pmLoggingClass::bufferForFile(const char *text, bool newline)
 {
     if(!_fileLoggingReady || _currentLogFileSize >= LOGFILE_MAX_SIZE)
         return;
 
-    File file = LittleFS.open(logFileName(0), "a");
-    if(!file)
-        return;
-
-    size_t written = 0;
-
     if(_atLineStart)
-        written += file.print("[" + String(millis()) + "] ");
+        _fileBuffer += "[" + String(millis()) + "] ";
 
-    written += file.print(text);
+    _fileBuffer += text;
 
     if(newline)
     {
-        written += file.println();
+        _fileBuffer += "\r\n";
         _atLineStart = true;
     }
     else
     {
         _atLineStart = false;
     }
+}
+
+void pmLoggingClass::flushLogBuffer()
+{
+    _lastFlushMillis = millis();
+
+    if(_fileBuffer.length() == 0)
+        return;
+
+    File file = LittleFS.open(logFileName(0), "a");
+    if(!file)
+        return;
+
+    size_t written = file.print(_fileBuffer);
+    file.close();
 
     _currentLogFileSize += written;
-    file.close();
+    _fileBuffer = "";
 }
 
 static String htmlEscape(const String &in)
@@ -140,6 +167,8 @@ static String htmlEscape(const String &in)
 
 String pmLoggingClass::handleLogsRoot(AsyncWebServerRequest *request)
 {
+    flushLogBuffer();
+
     if(request->hasParam("file"))
     {
         String requestedFile = request->getParam("file")->value();
@@ -207,6 +236,7 @@ String pmLoggingClass::handleLogsPost(AsyncWebServerRequest *request)
 
         _currentLogFileSize = 0;
         _atLineStart = true;
+        _fileBuffer = "";
 
         pmLogging.LogLn("Logfiles cleared by user");
     }

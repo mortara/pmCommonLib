@@ -250,6 +250,17 @@ void WIFIManagerClass::StartCaptivePortal()
 
 bool WIFIManagerClass::Connect()
 {
+   // No stored credentials (e.g. a freshly flashed device) — initWiFi()
+   // would just log "Undefined SSID" and bail out without ever setting
+   // `connecting`, so Loop()'s connect-timeout path that falls back to the
+   // captive portal would never trigger. Start the portal directly instead.
+   if(_wificredentials.SSID == "")
+   {
+       if(!captiveportalactive)
+           StartCaptivePortal();
+       return false;
+   }
+
    // A full initWiFi() (fresh WiFi.begin() with the current credentials) is
    // more reliable than WiFi.reconnect(), and also (re)establishes the
    // connecting/_lastConnectionTry bookkeeping Loop() relies on.

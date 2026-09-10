@@ -157,7 +157,10 @@ bool WIFIManagerClass::initWiFi()
     // Keep the AP alive while we retry STA from within the captive portal,
     // otherwise switching mode here would tear the portal down mid-retry.
     WiFi.mode(captiveportalactive ? WIFI_AP_STA : WIFI_STA);
-    WiFi.begin(_wificredentials.SSID.c_str(), _wificredentials.PASS.c_str(), 0, __null, false);
+    // tryConnect must be true — false only configures the STA credentials
+    // without ever calling esp_wifi_connect(), so the device would sit
+    // "configured" but never actually attempt to join the network.
+    WiFi.begin(_wificredentials.SSID.c_str(), _wificredentials.PASS.c_str(), 0, __null, true);
 
     connecting = true;
     _lastConnectionTry = millis();
@@ -398,7 +401,7 @@ void WIFIManagerClass::Loop()
             pmLogging.LogLn("WiFi connect attempt " + String(_connectionAttempts) + " of " + String(WIFI_MAX_CONNECT_ATTEMPTS) + " timed out, retrying ...");
             _lastConnectionTry = currentMillis;
             WiFi.disconnect();
-            WiFi.begin(_wificredentials.SSID.c_str(), _wificredentials.PASS.c_str(), 0, __null, false);
+            WiFi.begin(_wificredentials.SSID.c_str(), _wificredentials.PASS.c_str(), 0, __null, true);
         }
         else
         {

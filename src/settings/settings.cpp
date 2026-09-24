@@ -59,7 +59,7 @@ void pmSettingsClass::Begin()
     ConfigHTTPRegisterFunction f1 = std::bind(&pmSettingsClass::ServeConfigPageHTML, this, std::placeholders::_1);
     ConfigHTTPRegisterFunction f2 = std::bind(&pmSettingsClass::ProcessConfigPagePOST, this, std::placeholders::_1);
 
-    pmCommonLib.ConfigHandler.RegisterConfigPage("general", f1, f2);
+    pmCommonLib.ConfigHandler.RegisterConfigPage("general", f1, f2, "General");
 }
 
 void pmSettingsClass::RegisterSetting(String name, String defaultvalue, String label, pmSettingTypes type)
@@ -91,10 +91,7 @@ String pmSettingsClass::GetSettingValue(String name)
 
 String pmSettingsClass::ServeConfigPageHTML(AsyncWebServerRequest *request)
 {
-    Serial.println("Webserver handle request ... ");
-  
-    
-    String html = "<form action='/config/general.html' method='POST'>";
+    String html = pmConfigHandler::FormStart("general");
 
     for (std::list<pmSettingsStruct>::iterator setting = Settings.begin(); setting != Settings.end(); ++setting)
     {
@@ -104,14 +101,17 @@ String pmSettingsClass::ServeConfigPageHTML(AsyncWebServerRequest *request)
         if(label == "")
             label = setting->Name;
 
-        html += "<div class='form-group'>";
-        html += "<label for='" + name + "'>" + label + "</label>";
-        html += "<input type='text' id='" + name + "' name='" + name + "' value='" + setting->Value + "'>";
-        html += "</div>";
+        if(name == "cpu frequency")
+        {
+            html += pmConfigHandler::SelectField(name, label, {{"80", "80 MHz"}, {"160", "160 MHz"}, {"240", "240 MHz"}}, setting->Value);
+            continue;
+        }
+
+        html += pmConfigHandler::TextField(name, label, setting->Value, setting->Type == pmSettingTypes::NUMERICSETTING ? "number" : "text");
     }
 
-    html += "<div class='form-actions'><input type='submit' value='Submit'></div></form>";
-  
+    html += pmConfigHandler::FormEnd();
+
     return html;
 }
 
@@ -165,6 +165,5 @@ String pmSettingsClass::ProcessConfigPagePOST(AsyncWebServerRequest *request)
 
     pmCommonLib.ConfigHandler.SaveConfigFile(settingsconfigFilePath, data);
 
-    
-    return ServeConfigPageHTML(request);
+    return pmConfigHandler::Notice("Settings saved.") + ServeConfigPageHTML(request);
 }

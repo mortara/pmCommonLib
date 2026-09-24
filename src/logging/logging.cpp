@@ -84,7 +84,7 @@ void pmLoggingClass::Begin()
     ConfigHTTPRegisterFunction f1 = std::bind(&pmLoggingClass::handleLogsRoot, this, std::placeholders::_1);
     ConfigHTTPRegisterFunction f2 = std::bind(&pmLoggingClass::handleLogsPost, this, std::placeholders::_1);
 
-    pmCommonLib.ConfigHandler.RegisterConfigPage("logs", f1, f2);
+    pmCommonLib.ConfigHandler.RegisterConfigPage("logs", f1, f2, "Logs");
 }
 
 void pmLoggingClass::writeToLogFile(const char *text, bool newline)
@@ -117,27 +117,6 @@ void pmLoggingClass::writeToLogFile(const char *text, bool newline)
     file.close();
 }
 
-static String htmlEscape(const String &in)
-{
-    String out;
-    out.reserve(in.length());
-
-    for(size_t i = 0; i < in.length(); i++)
-    {
-        char c = in[i];
-        if(c == '&')
-            out += "&amp;";
-        else if(c == '<')
-            out += "&lt;";
-        else if(c == '>')
-            out += "&gt;";
-        else
-            out += c;
-    }
-
-    return out;
-}
-
 String pmLoggingClass::handleLogsRoot(AsyncWebServerRequest *request)
 {
     if(request->hasParam("file"))
@@ -155,20 +134,19 @@ String pmLoggingClass::handleLogsRoot(AsyncWebServerRequest *request)
         }
 
         if(!valid)
-            return "<p>Unknown logfile.</p><p><a href='/config/logs.html'>Back to logfile list</a></p>";
+            return pmConfigHandler::Notice("Unknown logfile.", true) + "<p><a href='/config/logs.html'>&larr; Back to logfile list</a></p>";
 
         File file = LittleFS.open("/" + requestedFile, "r");
         if(!file)
-            return "<p>Logfile not found.</p><p><a href='/config/logs.html'>Back to logfile list</a></p>";
+            return pmConfigHandler::Notice("Logfile not found.", true) + "<p><a href='/config/logs.html'>&larr; Back to logfile list</a></p>";
 
         String content = file.readString();
         file.close();
 
-        return "<p><a href='/config/logs.html'>Back to logfile list</a></p>\
-                <pre style='white-space:pre-wrap;word-break:break-word;background:#111;color:#0f0;padding:12px;border-radius:5px;max-height:70vh;overflow:auto;'>" + htmlEscape(content) + "</pre>";
+        return "<p><a href='/config/logs.html'>&larr; Back to logfile list</a></p><pre class='log'>" + pmConfigHandler::HtmlEscape(content) + "</pre>";
     }
 
-    String html = "<p>Stored boot logfiles (log0 = current/most recent):</p><ul>";
+    String html = "<p class='muted'>Stored boot logfiles (log0 = current/most recent):</p><ul class='list'>";
     bool any = false;
 
     for(int i = 0; i < LOGFILE_COUNT; i++)
@@ -183,13 +161,13 @@ String pmLoggingClass::handleLogsRoot(AsyncWebServerRequest *request)
         if(file)
             file.close();
 
-        html += "<li><a href='/config/logs.html?file=" + name.substring(1) + "'>" + name.substring(1) + "</a> (" + String(size) + " bytes)</li>";
+        html += "<li><a href='/config/logs.html?file=" + name.substring(1) + "'>" + name.substring(1) + "</a><span class='muted'>" + String(size) + " bytes</span></li>";
     }
 
     if(!any)
         html += "<li>No logfiles stored yet.</li>";
 
-    html += "</ul><form action='/config/logs.html' method='POST'><input type='hidden' name='action' value='clear'><input type='submit' value='Clear all logfiles'></form>";
+    html += "</ul><form action='/config/logs.html' method='POST'><input type='hidden' name='action' value='clear'><div class='form-actions'><input class='btn-danger' type='submit' value='Clear all logfiles' onclick=\"return confirm('Delete all logfiles?')\"></div></form>";
 
     return html;
 }

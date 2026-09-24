@@ -31,27 +31,15 @@ MQTTConnectorClass::~MQTTConnectorClass()
 }
 
 String MQTTConnectorClass::mqtt_config_page(AsyncWebServerRequest *request) {
-    Serial.println("Webserver handle request ... ");
-  
-    
-    String html = "<form action='/config/mqtt.html' method='POST'>";
-    html += "<div class='form-group'><label for='broker'>Broker</label>";
-    html += "<input type='text' id='broker' name='broker' value='" + _mqttcredentials.Broker + "'></div>";
-    html += "<div class='form-group'><label for='port'>Port</label>";
-    html += "<input type='text' id='port' name='port' value='" + _mqttcredentials.Port + "'></div>";
-    html += "<div class='form-group'><label for='user'>User</label>";
-    html += "<input type='text' id='user' name='user' value='" + _mqttcredentials.User + "'></div>";
-    html += "<div class='form-group'><label for='pass'>Password</label>";
-    html += "<input type='password' id='pass' name='pass' value='" + _mqttcredentials.Pass + "'></div>";
-    html += "<div class='form-group'><label for='devicename'>Device name</label>";
-    html += "<input type='text' id='devicename' name='devicename' value='" + _mqttcredentials.DeviceName + "'></div>";
-    html += "<div class='form-group'><label for='manufacturer'>Manufacturer</label>";
-    html += "<input type='text' id='manufacturer' name='manufacturer' value='" + _mqttcredentials.ManuFacturer + "'></div>";
-    html += "<div class='form-group'><label for='model'>Model</label>";
-    html += "<input type='text' id='model' name='model' value='" + _mqttcredentials.Model + "'></div>";
-    html += "<div class='form-actions'><input type='submit' value='Submit'></div>";
-    html += "</form>";
-  
+    String html = pmConfigHandler::FormStart("mqtt");
+    html += pmConfigHandler::TextField("broker", "Broker", _mqttcredentials.Broker);
+    html += pmConfigHandler::TextField("port", "Port", _mqttcredentials.Port, "number");
+    html += pmConfigHandler::TextField("user", "User", _mqttcredentials.User);
+    html += pmConfigHandler::TextField("pass", "Password", "", "password", "Leave empty to keep the current password.");
+    html += pmConfigHandler::TextField("manufacturer", "Manufacturer", _mqttcredentials.ManuFacturer);
+    html += pmConfigHandler::TextField("model", "Model", _mqttcredentials.Model);
+    html += pmConfigHandler::FormEnd();
+
     return html;
   }
 
@@ -84,16 +72,9 @@ String MQTTConnectorClass::mqtt_config_page(AsyncWebServerRequest *request) {
                 Serial.println(_mqttcredentials.User);
             }
             
-            if (p->name() == "pass") {
+            if (p->name() == "pass" && p->value() != "") {
                 _mqttcredentials.Pass = p->value();
-                Serial.print("Password set to: ");
-                Serial.println(_mqttcredentials.Pass);        
-            }
-
-            if (p->name() == "devicename") {
-                _mqttcredentials.DeviceName = p->value();
-                Serial.print("DeviceName set to: ");
-                Serial.println(_mqttcredentials.DeviceName);        
+                Serial.println("Password updated");
             }
 
             if (p->name() == "manufacturer") {
@@ -124,7 +105,7 @@ String MQTTConnectorClass::mqtt_config_page(AsyncWebServerRequest *request) {
       pmCommonLib.ConfigHandler.SaveConfigFile(MQTTconfigFilePath, data);
   
       
-      return mqtt_config_page(request);
+      return pmConfigHandler::Notice("MQTT settings saved.") + mqtt_config_page(request);
   }
 
 void MQTTConnectorClass::default_callback(char* topic, uint8_t* payload, unsigned int length) {
@@ -192,7 +173,7 @@ void MQTTConnectorClass::Begin()
     {
         ConfigHTTPRegisterFunction f1 = std::bind(&MQTTConnectorClass::mqtt_config_page, this, std::placeholders::_1);
         ConfigHTTPRegisterFunction f2 = std::bind(&MQTTConnectorClass::mqtt_config_page_POST, this, std::placeholders::_1);
-        pmCommonLib.ConfigHandler.RegisterConfigPage("mqtt", f1, f2);
+        pmCommonLib.ConfigHandler.RegisterConfigPage("mqtt", f1, f2, "MQTT");
     }
 }
 

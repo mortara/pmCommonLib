@@ -10,38 +10,23 @@ String WIFIManagerClass::captivePortalRedirector(AsyncWebServerRequest *request)
 String WIFIManagerClass::handleWifManagerRoot(AsyncWebServerRequest *request) {
     pmLogging.LogLn("Webserver handle wifi request ... ");
 
-    String o1 = "";
-    String o2 = "";
+    bool isStatic = _wificredentials.ConfigMode == "static";
 
-    if(_wificredentials.ConfigMode == "static")
-      o2 = "selected";
-    else
-      o1 = "selected";
-
-    String html = "<form action='/config/wifi.html' method='POST'>\
-                    <p>\
-                      <label for='ssid'>SSID</label>\
-                      <input type='text' id ='ssid' name='ssid' value='" + _wificredentials.SSID + "'><br>\
-                      <label for='pass'>Password</label>\
-                      <input type='text' id ='pass' name='pass' value='" + _wificredentials.PASS + "'><br>\
-                      <label for='pass'>Hostname</label>\
-                      <input type='text' id ='hostname' name='hostname' value='" + _wificredentials.Hostname + "'><br>\
-                      <label for='ipmode'>Network configuration</label>\
-                      <select id='ipmode' name='ipmode'>\
-                        <option value='dhcp' " + o1 + ">DHCP</option>\
-                        <option value='static' " + o2 + ">Static</option>\
-                      </select><br>\
-                      <label for='ip'>IP address</label>\
-                      <input type='text' id ='ip' name='ip' value='" + _wificredentials.IP + "'><br>\
-                      <label for='subnet'>Subnet</label>\
-                      <input type='text' id ='subnet' name='subnet' value='" + _wificredentials.Subnet + "'><br>\
-                      <label for='gateway'>Gateway</label>\
-                      <input type='text' id ='gateway' name='gateway' value='" + _wificredentials.Gateway + "'><br>\
-                      <label for='dns'>DNS server</label>\
-                      <input type='text' id ='dns' name='dns' value='" + _wificredentials.DNS + "'><br>\
-                      <input type ='submit' value ='Submit'>\
-                    </p>\
-                  </form>";
+    String html = pmConfigHandler::FormStart("wifi");
+    html += pmConfigHandler::TextField("ssid", "Network name (SSID)", _wificredentials.SSID);
+    html += pmConfigHandler::TextField("pass", "Password", "", "password", "Leave empty to keep the current password.");
+    html += pmConfigHandler::SelectField("ipmode", "IP configuration", {{"dhcp", "Automatic (DHCP)"}, {"static", "Static"}}, isStatic ? "static" : "dhcp");
+    html += String("<div id='static-fields'") + (isStatic ? "" : " style='display:none'") + ">";
+    html += pmConfigHandler::TextField("ip", "IP address", _wificredentials.IP);
+    html += pmConfigHandler::TextField("subnet", "Subnet mask", _wificredentials.Subnet);
+    html += pmConfigHandler::TextField("gateway", "Gateway", _wificredentials.Gateway);
+    html += pmConfigHandler::TextField("dns", "DNS server", _wificredentials.DNS);
+    html += "</div>";
+    html += pmConfigHandler::FormEnd("Save &amp; connect");
+    html += "<script>var m=document.getElementById('ipmode'),f=document.getElementById('static-fields');"
+            "function t(){var s=m.value=='static';f.style.display=s?'':'none';"
+            "f.querySelectorAll('input').forEach(function(i){i.disabled=!s})}"
+            "m.onchange=t;t();</script>";
 
     return html;
 }
@@ -63,10 +48,9 @@ String WIFIManagerClass::handlePOSTrequest(AsyncWebServerRequest *request)
               Serial.println(_wificredentials.SSID);
           }
           // HTTP POST pass value
-          if (p->name() == "pass") {
+          if (p->name() == "pass" && p->value() != "") {
             _wificredentials.PASS = p->value();
-              Serial.print("Password set to: ");
-              Serial.println(_wificredentials.PASS);
+              Serial.println("Password updated");
           }
           // HTTP POST ip value
           if (p->name() == "ip") {
@@ -99,20 +83,23 @@ String WIFIManagerClass::handlePOSTrequest(AsyncWebServerRequest *request)
               Serial.print("DNS server set to: ");
               Serial.println(_wificredentials.DNS);
           }
-
-          if (p->name() == "hostname") {
-            _wificredentials.Hostname = p->value();
-              Serial.print("Host name set to: ");
-              Serial.println(_wificredentials.Hostname);
-          }
         //Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
         }
+    }
+
+    // Manual addressing is meaningless with DHCP; don't keep stale values around.
+    if(_wificredentials.ConfigMode != "static")
+    {
+        _wificredentials.IP = "";
+        _wificredentials.Subnet = "";
+        _wificredentials.Gateway = "";
+        _wificredentials.DNS = "";
     }
 
     SaveConfig();
     Disconnect();
     Connect();
-    return "";
+    return pmConfigHandler::Notice("Saved. The device is now connecting to the network; this page may become unreachable if the IP address changed.") + handleWifManagerRoot(request);
 }
 
 bool WIFIManagerClass::initWiFi() 
@@ -151,8 +138,13 @@ bool WIFIManagerClass::initWiFi()
 
     // Hostname must be set before WiFi.begin()/WiFi.mode() to reliably take
     // effect for the DHCP client's hostname option.
-    if(_wificredentials.Hostname != "")
-        WiFi.setHostname(_wificredentials.Hostname.c_str());
+    // The device name from the General page is the single source of truth;
+    // the stored hostname is only a fallback for devices without it.
+    String hostname = pmCommonLib.Settings.GetSettingValue("devicename");
+    if(hostname == "")
+        hostname = _wificredentials.Hostname;
+    if(hostname != "")
+        WiFi.setHostname(hostname.c_str());
 
     // Keep the AP alive while we retry STA from within the captive portal,
     // otherwise switching mode here would tear the portal down mid-retry.
@@ -183,7 +175,7 @@ void WIFIManagerClass::Setup(bool autoconnect)
   ConfigHTTPRegisterFunction f1 = std::bind(&WIFIManagerClass::handleWifManagerRoot, this, std::placeholders::_1);
   ConfigHTTPRegisterFunction f2 = std::bind(&WIFIManagerClass::handlePOSTrequest, this, std::placeholders::_1);
 
-  pmCommonLib.ConfigHandler.RegisterConfigPage("wifi", f1, f2);
+  pmCommonLib.ConfigHandler.RegisterConfigPage("wifi", f1, f2, "WiFi");
 }
 
 void WIFIManagerClass::Begin()
@@ -211,7 +203,6 @@ void WIFIManagerClass::LoadConfig()
       _wificredentials.Hostname = doc["Hostname"].as<String>();
 
       pmLogging.LogLn("SSID: " + _wificredentials.SSID);
-      pmLogging.LogLn("PASS: " + _wificredentials.PASS);
   }
 }
 

@@ -10,6 +10,14 @@
 // Cap on a single boot-log's size so runaway logging can't fill the flash.
 #define LOGFILE_MAX_SIZE 32768UL
 
+// Log text destined for the file is buffered in RAM and only flushed to
+// LittleFS once one of these thresholds is hit, instead of doing a
+// synchronous open+write+close on every single Log()/LogLn() call. This
+// keeps the (highly variable, sometimes 100ms+) flash write latency off
+// the caller's stack.
+#define LOGFILE_FLUSH_THRESHOLD_BYTES 256UL
+#define LOGFILE_FLUSH_INTERVAL_MS 1000UL
+
 class pmLoggingClass
 {
     private:
@@ -17,21 +25,26 @@ class pmLoggingClass
         bool _atLineStart = true;
         size_t _currentLogFileSize = 0;
 
+        String _fileBuffer;
+        unsigned long _lastFlushMillis = 0;
+
         String logFileName(int index);
         void rotateLogFiles();
-        void writeToLogFile(const char *text, bool newline);
+        void bufferForFile(const char *text, bool newline);
+        void flushLogBuffer();
 
     public:
-        void Log(String text, bool newline = false, bool towebserial = true, bool toserial = true);
-        void LogLn(String text, bool towebserial = true, bool toserial = true);
+        void Log(String text, bool newline = false, bool towebserial = true, bool toserial = true, bool tofile = true);
+        void LogLn(String text, bool towebserial = true, bool toserial = true, bool tofile = true);
 
-        void Log(const char *text, bool newline = false, bool towebserial = true, bool toserial = true);
-        void LogLn(const char *text, bool towebserial = true, bool toserial = true);
+        void Log(const char *text, bool newline = false, bool towebserial = true, bool toserial = true, bool tofile = true);
+        void LogLn(const char *text, bool towebserial = true, bool toserial = true, bool tofile = true);
 
         void LogLn();
 
         void Setup();
         void Begin();
+        void Loop();
 
         String handleLogsRoot(AsyncWebServerRequest *request);
         String handleLogsPost(AsyncWebServerRequest *request);

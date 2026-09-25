@@ -26,12 +26,16 @@ class pmConfigHandler
 {
     private:
         bool _setup = false;
+        unsigned long _rebootAt = 0;
         bool initLittleFS();
         
 
     public:
         bool Setup();
         void Begin();
+        void Loop();
+        String StatusPage(AsyncWebServerRequest *request);
+        String StatusPagePOST(AsyncWebServerRequest *request);
         String readFile(fs::FS &fs, const char * path);
         void writeFile(fs::FS &fs, const char * path, const char * message);
 

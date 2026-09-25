@@ -29,6 +29,10 @@ input[type=submit]:hover,button:hover,.btn:hover{background:#1282A2}
 .list li{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee}
 .list a{color:#034078;text-decoration:none;font-weight:600}
 .muted{color:#777;font-size:.9rem}
+table.kv{width:100%;border-collapse:collapse;margin-bottom:8px}
+table.kv th{text-align:left;font-weight:600;color:#555;padding:8px 12px 8px 0;border-bottom:1px solid #eee;width:45%}
+table.kv td{padding:8px 0;border-bottom:1px solid #eee;word-break:break-all}
+h3{font-size:.85rem;text-transform:uppercase;letter-spacing:.04em;color:#034078;margin:20px 0 4px}
 pre.log{white-space:pre-wrap;word-break:break-word;background:#111;color:#0f0;padding:12px;border-radius:5px;max-height:70vh;overflow:auto;font-size:.85rem}
 )CSS";
 
@@ -117,16 +121,10 @@ void handleConfigManagerRoot(AsyncWebServerRequest *request) {
       }
     }
 
-    // /config/ itself has no content of its own: send the user to the first page
-    // ("general" if present) instead of showing a page that only lists links.
+    // /config/ itself has no content of its own: send the user to the first page.
     if(current == nullptr)
     {
-        String target = pages.front().Name;
-        for (auto it = pages.begin(); it != pages.end(); ++it)
-            if(it->Name == "general")
-                target = it->Name;
-
-        request->redirect("/config/" + target + ".html");
+        request->redirect("/config/" + pages.front().Name + ".html");
         return;
     }
 
@@ -171,6 +169,99 @@ void pmConfigHandler::Begin()
     pmCommonLib.WebServer.RegisterOn("/config/style.css", handleConfigCSS);
     pmCommonLib.WebServer.RegisterOn("/config/", handleConfigManagerRoot);
     pmCommonLib.WebServer.RegisterOn("/config/", handleConfigManagerRoot, HTTP_POST);
+
+    ConfigHTTPRegisterFunction f1 = std::bind(&pmConfigHandler::StatusPage, this, std::placeholders::_1);
+    ConfigHTTPRegisterFunction f2 = std::bind(&pmConfigHandler::StatusPagePOST, this, std::placeholders::_1);
+    RegisterConfigPage("status", f1, f2, "Status");
+    // Status is the landing page, so it comes first in the tab bar.
+    ConfigPages.splice(ConfigPages.begin(), ConfigPages, std::prev(ConfigPages.end()));
+}
+
+void pmConfigHandler::Loop()
+{
+    // Reboot is deferred so the HTTP response can still be sent first.
+    if(_rebootAt != 0 && (long)(millis() - _rebootAt) >= 0)
+    {
+        pmLogging.LogLn("Rebooting on user request");
+        ESP.restart();
+    }
+}
+
+static String statusRow(const String &label, const String &value)
+{
+    return "<tr><th>" + pmConfigHandler::HtmlEscape(label) + "</th><td>" + pmConfigHandler::HtmlEscape(value) + "</td></tr>";
+}
+
+static String formatUptime(unsigned long ms)
+{
+    unsigned long s = ms / 1000UL;
+    unsigned long d = s / 86400UL; s %= 86400UL;
+    unsigned long h = s / 3600UL;  s %= 3600UL;
+    unsigned long m = s / 60UL;    s %= 60UL;
+    String out;
+    if(d > 0) out += String(d) + "d ";
+    return out + String(h) + "h " + String(m) + "m " + String(s) + "s";
+}
+
+String pmConfigHandler::StatusPage(AsyncWebServerRequest *request)
+{
+    String html = "<h3>Chip</h3><table class='kv'>";
+
+    #if defined(ESP8266)
+    html += statusRow("Model", "ESP8266");
+    html += statusRow("Chip ID", String(ESP.getChipId(), HEX));
+    html += statusRow("Core version", ESP.getCoreVersion());
+    html += statusRow("CPU frequency", String(ESP.getCpuFreqMHz()) + " MHz");
+    html += statusRow("Flash size", String(ESP.getFlashChipSize() / 1024) + " KB");
+    html += statusRow("Firmware size", String(ESP.getSketchSize() / 1024) + " KB (" + String(ESP.getFreeSketchSpace() / 1024) + " KB free)");
+    html += statusRow("Free heap", String(ESP.getFreeHeap() / 1024.0, 1) + " KB");
+    html += statusRow("Reset reason", ESP.getResetReason());
+    #else
+    html += statusRow("Model", String(ESP.getChipModel()) + " rev " + String(ESP.getChipRevision()));
+    html += statusRow("Cores", String(ESP.getChipCores()));
+    html += statusRow("CPU frequency", String(getCpuFrequencyMhz()) + " MHz");
+    html += statusRow("Flash size", String(ESP.getFlashChipSize() / 1024) + " KB");
+    html += statusRow("Firmware size", String(ESP.getSketchSize() / 1024) + " KB (" + String(ESP.getFreeSketchSpace() / 1024) + " KB free)");
+    html += statusRow("Free heap", String(ESP.getFreeHeap() / 1024.0, 1) + " KB (min " + String(ESP.getMinFreeHeap() / 1024.0, 1) + " KB)");
+    html += statusRow("SDK version", ESP.getSdkVersion());
+    #endif
+    html += statusRow("Uptime", formatUptime(millis()));
+    html += "</table>";
+
+    html += "<h3>Network</h3><table class='kv'>";
+    html += statusRow("Hostname", WiFi.getHostname() ? String(WiFi.getHostname()) : String(""));
+    if(WiFi.isConnected())
+    {
+        html += statusRow("SSID", WiFi.SSID());
+        html += statusRow("Signal", String(WiFi.RSSI()) + " dBm");
+        html += statusRow("IP address", WiFi.localIP().toString());
+    }
+    else
+    {
+        html += statusRow("WiFi", "Not connected");
+        if(WiFi.softAPIP().toString() != "0.0.0.0")
+            html += statusRow("Access point IP", WiFi.softAPIP().toString());
+    }
+    html += statusRow("MAC address", WiFi.macAddress());
+    html += "</table>";
+
+    html += "<form action='/config/status.html' method='POST' onsubmit=\"return confirm('Reboot the device now?')\">"
+            "<input type='hidden' name='action' value='reboot'>"
+            "<div class='form-actions'><input class='btn-danger' type='submit' value='Reboot device'></div></form>";
+
+    return html;
+}
+
+String pmConfigHandler::StatusPagePOST(AsyncWebServerRequest *request)
+{
+    if(request->hasParam("action", true) && request->getParam("action", true)->value() == "reboot")
+    {
+        _rebootAt = millis() + 1000UL;
+        return Notice("Rebooting ... reload this page in a few seconds.") +
+               "<script>setTimeout(function(){location.href='/config/status.html'},8000)</script>";
+    }
+
+    return StatusPage(request);
 }
 
 

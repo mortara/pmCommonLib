@@ -71,6 +71,7 @@ void pmCommonLibClass::Loop()
 
     previousMillis = currentMillis;
 
+    ConfigHandler.Loop();
     WiFiManager.Loop();
 
     if(OTAHandler.IsSetup())

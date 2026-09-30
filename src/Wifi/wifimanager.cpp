@@ -149,6 +149,15 @@ bool WIFIManagerClass::initWiFi()
     // Keep the AP alive while we retry STA from within the captive portal,
     // otherwise switching mode here would tear the portal down mid-retry.
     WiFi.mode(captiveportalactive ? WIFI_AP_STA : WIFI_STA);
+
+    // Robustness against sporadic 4-way-handshake / HANDSHAKE_TIMEOUT failures:
+    // - modem sleep makes the radio miss the AP's EAPOL frames,
+    // - full TX power on many ESP32-S3 boards causes supply droop during the
+    //   handshake burst (esp. with USB power), so cap it moderately.
+    WiFi.setSleep(false);
+    WiFi.setTxPower(WIFI_POWER_15dBm);
+    WiFi.setAutoReconnect(true);
+
     // tryConnect must be true — false only configures the STA credentials
     // without ever calling esp_wifi_connect(), so the device would sit
     // "configured" but never actually attempt to join the network.
